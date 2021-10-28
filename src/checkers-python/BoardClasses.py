@@ -7,24 +7,29 @@ We are following the javadoc docstring format which is:
 @raise tag describes the errors this function can raise
 """
 
-
 import copy
 import re
 from Move import Move
+
+
 class InvalidMoveError(Exception):
     pass
+
 
 class InvalidParameterError(Exception):
     pass
 
+
 import Checker
+
 
 class Board:
     """
     This class describes Board
     """
     opponent = {"W": "B", "B": "W"}
-    def __init__(self, col,row, p):
+
+    def __init__(self, col, row, p):
         """
         Intializes board: 
             M = number of rows
@@ -45,7 +50,7 @@ class Board:
         self.col = col
         self.p = p
         self.board = []
-        self.saved_move = [ ]#self.saved_move = [Move([]),[],False]
+        self.saved_move = []  # self.saved_move = [Move([]),[],False]
         for row in range(self.row):
             self.board.append([])
             for col in range(self.col):
@@ -53,7 +58,6 @@ class Board:
 
         self.black_count = 0
         self.white_count = 0
-
 
     def initialize_game(self):
         """
@@ -74,21 +78,19 @@ class Board:
                     if i % 2:
                         # odd row, shift to the left and attach a piece to the end when needed
                         if j - 1 >= 0:
-                            self.board[i][j-1] = Checker.Checker("B", [i, j-1])
+                            self.board[i][j - 1] = Checker.Checker("B", [i, j - 1])
                         if j == self.col - 2 and not self.col % 2:
-                            self.board[i][self.col-1] = Checker.Checker("B", [i,self.col-1])
+                            self.board[i][self.col - 1] = Checker.Checker("B", [i, self.col - 1])
                     else:
                         # even row, shift to the right and attach a piece to the beginning when needed
                         if j + 1 <= self.col - 1:
-                            self.board[i][j+1] = Checker.Checker("B", [i,j+1])
+                            self.board[i][j + 1] = Checker.Checker("B", [i, j + 1])
                         if (j == self.col - 1 or j == self.col - 2) and not self.p % 2:
-                            self.board[i][0] = Checker.Checker("B", [i,0])
+                            self.board[i][0] = Checker.Checker("B", [i, 0])
                 else:  # row,p = even,even or odd,odd
-                    self.board[i][j] = Checker.Checker("B", [i,j])
+                    self.board[i][j] = Checker.Checker("B", [i, j])
                 self.white_count += 1
                 self.black_count += 1
-
-
 
     def make_move(self, move, turn):
         """
@@ -98,7 +100,7 @@ class Board:
         @return:
         @raise InvalidMoveError: raises this objection if the move provided isn't valid on the current board
         """
-        temp_saved_move = [Move([]),[],False]
+        temp_saved_move = [Move([]), [], False]
         if type(turn) is int:
             if turn == 1:
                 turn = 'B'
@@ -113,70 +115,80 @@ class Board:
         is_start_checker_king = self.board[ultimate_start[0]][ultimate_start[1]].is_king
         past_positions = [ultimate_start]
         capture_positions = []
-        for i in range(len(move_list)-1):
-            move_to_check.append((move_list[i],move_list[i + 1]))
+        for i in range(len(move_list) - 1):
+            move_to_check.append((move_list[i], move_list[i + 1]))
         # e.g move = Move((0,0)-(2,2)-(0,4))
         #     move_to_check = [((0,0),(2,2)),((2,2),(0,4))]
         if_capture = False
         self.tie_counter += 1
         saved_enemy_position = []
         for t in range(len(move_to_check)):
-            start = move_to_check[t][0] # e.g. (0,0)
-            target= move_to_check[t][1] # e.g. (2,2)
-            if self.is_valid_move(start[0],start[1],target[0],target[1],turn) or (if_capture and abs(start[0]-target[0]) == 1):
+            start = move_to_check[t][0]  # e.g. (0,0)
+            target = move_to_check[t][1]  # e.g. (2,2)
+            if self.is_valid_move(start[0], start[1], target[0], target[1], turn) or (
+                    if_capture and abs(start[0] - target[0]) == 1):
                 # invailid move or attempting to make a single move after capture
                 self.board[start[0]][start[1]].color = "."
                 self.board[target[0]][target[1]].color = turn
                 self.board[target[0]][target[1]].is_king = self.board[start[0]][start[1]].is_king
                 self.board[start[0]][start[1]].become_man()
                 past_positions.append(target)
-                if abs(start[0]-target[0]) == 2:
+                if abs(start[0] - target[0]) == 2:
                     # capture happened
                     if_capture = True
                     self.tie_counter = 0
-                    capture_position = ((start[0] + (target[0]-start[0])//2), (start[1] + (target[1]-start[1])//2))
+                    capture_position = (
+                    (start[0] + (target[0] - start[0]) // 2), (start[1] + (target[1] - start[1]) // 2))
                     # calculate capture position
                     capture_positions.append(capture_position)
                     # record capture position
-                    saved_enemy_position.append((capture_position[0],capture_position[1],self.board[capture_position[0]][capture_position[1]].color,self.board[capture_position[0]][capture_position[1]].is_king))
-                    self.board[capture_position[0]][capture_position[1]] = Checker.Checker(".", [capture_position[0], capture_position[1]])
+                    saved_enemy_position.append((capture_position[0], capture_position[1],
+                                                 self.board[capture_position[0]][capture_position[1]].color,
+                                                 self.board[capture_position[0]][capture_position[1]].is_king))
+                    self.board[capture_position[0]][capture_position[1]] = Checker.Checker(".", [capture_position[0],
+                                                                                                 capture_position[1]])
                     # capture
                     if turn == "B":
                         self.white_count -= 1
                     else:
                         self.black_count -= 1
-                if (turn == 'B' and target[0] == self.row - 1):# and not self.board[target[0]][target[1]].is_king):
+                if (turn == 'B' and target[0] == self.row - 1):  # and not self.board[target[0]][target[1]].is_king):
                     if not is_start_checker_king:
                         temp_saved_move[2] = True
                     self.board[target[0]][target[1]].become_king()
-                    #self.saved_move[2] = True
+                    # self.saved_move[2] = True
                     if not is_start_checker_king:
                         break
 
-                elif (turn == 'W' and target[0] == 0):# and not self.board[target[0]][target[1]].is_king):
+                elif (turn == 'W' and target[0] == 0):  # and not self.board[target[0]][target[1]].is_king):
                     if not is_start_checker_king:
                         temp_saved_move[2] = True
                     self.board[target[0]][target[1]].become_king()
-                     #self.saved_move[2] = True
+                    # self.saved_move[2] = True
                     if not is_start_checker_king:
                         break
                 else:
-                    temp_saved_move[2] = False #self.saved_move[2] = False
+                    temp_saved_move[2] = False  # self.saved_move[2] = False
 
             else:
                 for failed_capture in capture_positions:
                     # recover failed captures
-                    self.board[failed_capture[0]][failed_capture[1]] = Checker.Checker(self.opponent[turn],[failed_capture[0],failed_capture[1]])
+                    self.board[failed_capture[0]][failed_capture[1]] = Checker.Checker(self.opponent[turn],
+                                                                                       [failed_capture[0],
+                                                                                        failed_capture[1]])
                 for failed_position in past_positions:
                     # recover failed moves
-                    self.board[failed_position[0]][failed_position[1]] = Checker.Checker(".", [failed_position[0],failed_position[1]])
-                self.board[ultimate_start[0]][ultimate_start[1]] = Checker.Checker(turn, [ultimate_start[0],ultimate_start[1]])
+                    self.board[failed_position[0]][failed_position[1]] = Checker.Checker(".", [failed_position[0],
+                                                                                               failed_position[1]])
+                self.board[ultimate_start[0]][ultimate_start[1]] = Checker.Checker(turn, [ultimate_start[0],
+                                                                                          ultimate_start[1]])
                 raise InvalidMoveError
 
-        temp_saved_move[0] = copy.deepcopy(move) #self.saved_move[0] = copy.deepcopy(move)
-        temp_saved_move[1] = saved_enemy_position #self.saved_move[1] = saved_enemy_position
+        temp_saved_move[0] = copy.deepcopy(move)  # self.saved_move[0] = copy.deepcopy(move)
+        temp_saved_move[1] = saved_enemy_position  # self.saved_move[1] = saved_enemy_position
         self.saved_move.append(temp_saved_move)
-    def is_in_board(self,pos_x,pos_y):
+
+    def is_in_board(self, pos_x, pos_y):
         """
         Checks if the coordinate provided is in board. Is an internal function
         @param pos_x: x coordinte of the object to check for
@@ -184,7 +196,7 @@ class Board:
         @return: a bool to describe if object is in the board or not
         @raise:
         """
-        return pos_x >= 0 and pos_x < self.row and pos_y >= 0 and pos_y < self.col
+        return 0 <= pos_x < self.row and 0 <= pos_y < self.col
 
     def is_valid_move(self, chess_row, chess_col, target_row, target_col, turn):
         """
@@ -198,42 +210,43 @@ class Board:
         @raise :
         """
         if target_row < 0 or target_row >= self.row or target_col < 0 or target_col >= self.col:
-        # move out of the board
+            # move out of the board
             return False
         if not self.board[target_row][target_col].color == ".":
-        # target position is not empty
+            # target position is not empty
             return False
         if not self.board[chess_row][chess_col].color == turn:
-        # there must be a chessman at that position
+            # there must be a chessman at that position
             return False
-        diff_col = target_col - chess_col # difference in col number
-        diff_row = target_row - chess_row # difference in row number
+        diff_col = target_col - chess_col  # difference in col number
+        diff_row = target_row - chess_row  # difference in row number
         if abs(diff_col) != abs(diff_row):
-        # each move has to be 1,1 or 2,2
+            # each move has to be 1,1 or 2,2
             return False
         chess_being_moved = self.board[chess_row][chess_col]
-        if diff_row == 1 and diff_col == 1 : # down, right: king, black
+        if diff_row == 1 and diff_col == 1:  # down, right: king, black
             return chess_being_moved.is_king or chess_being_moved.color == "B"
-        if diff_row == 1 and diff_col == -1 : # down, left: king, black
+        if diff_row == 1 and diff_col == -1:  # down, left: king, black
             return chess_being_moved.is_king or chess_being_moved.color == "B"
-        if diff_row == -1 and diff_col == 1 : # up, right: king, red
+        if diff_row == -1 and diff_col == 1:  # up, right: king, red
             return chess_being_moved.is_king or chess_being_moved.color == "W"
-        if diff_row == -1 and diff_col == -1 : # up, left: king, red
+        if diff_row == -1 and diff_col == -1:  # up, left: king, red
             return chess_being_moved.is_king or chess_being_moved.color == "W"
-        if diff_row == 2 and diff_col == 2: # down, right, capture: king, black
-            return (chess_being_moved.is_king or chess_being_moved.color == "B") and self.board[chess_row + 1][chess_col + 1].color != turn and self.board[chess_row + 1][chess_col + 1].color != "."
-        if diff_row == 2 and diff_col == -2: # down, left, capture: king, black
-            return (chess_being_moved.is_king or chess_being_moved.color == "B") and self.board[chess_row + 1][chess_col - 1].color != turn and self.board[chess_row + 1][chess_col - 1].color != "."
+        if diff_row == 2 and diff_col == 2:  # down, right, capture: king, black
+            return (chess_being_moved.is_king or chess_being_moved.color == "B") and self.board[chess_row + 1][
+                chess_col + 1].color != turn and self.board[chess_row + 1][chess_col + 1].color != "."
+        if diff_row == 2 and diff_col == -2:  # down, left, capture: king, black
+            return (chess_being_moved.is_king or chess_being_moved.color == "B") and self.board[chess_row + 1][
+                chess_col - 1].color != turn and self.board[chess_row + 1][chess_col - 1].color != "."
         if diff_row == -2 and diff_col == 2:  # up, right, capture: king, red
-            return (chess_being_moved.is_king or chess_being_moved.color == "W") and self.board[chess_row - 1][chess_col + 1].color != turn and self.board[chess_row - 1][chess_col + 1].color != "."
+            return (chess_being_moved.is_king or chess_being_moved.color == "W") and self.board[chess_row - 1][
+                chess_col + 1].color != turn and self.board[chess_row - 1][chess_col + 1].color != "."
         if diff_row == -2 and diff_col == -2:  # up, left, capture: king, red
-            return (chess_being_moved.is_king or chess_being_moved.color == "W") and self.board[chess_row - 1][chess_col - 1].color != turn and self.board[chess_row - 1][chess_col - 1].color != "."
+            return (chess_being_moved.is_king or chess_being_moved.color == "W") and self.board[chess_row - 1][
+                chess_col - 1].color != turn and self.board[chess_row - 1][chess_col - 1].color != "."
         return False
 
-
-
-
-    def get_all_possible_moves(self,color):
+    def get_all_possible_moves(self, color):
         """
         this function returns the all possible moves of the player whose turn it is
         @param color: color of the player whose turn it is
@@ -252,7 +265,8 @@ class Board:
             for col in range(self.col):
                 checker = self.board[row][col]
                 if checker.color == color:
-                    moves,is_capture = checker.get_possible_moves(self) # calls checker class's get possible moves and filters those moves down
+                    moves, is_capture = checker.get_possible_moves(
+                        self)  # calls checker class's get possible moves and filters those moves down
                     if temp == 0 and not is_capture:
                         if moves:
                             result.append(moves)
@@ -270,10 +284,9 @@ class Board:
         #             if len(move.seq) <= 2:
         #                 moves.remove(move)
 
-
         return result
 
-    def is_win(self,turn):
+    def is_win(self, turn):
         """
         this function tracks if any player has won
         @param :
@@ -284,7 +297,7 @@ class Board:
         if turn == "W":
             turn = 2
         elif turn == "B":
-            turn =  1
+            turn = 1
         if self.tie_counter >= self.tie_max:
             return -1
         W_has_move = True
@@ -320,28 +333,28 @@ class Board:
         else:
             return 0
 
-    def show_board(self,fh=None):
+    def show_board(self, fh=None):
         """
         prints board to console or to file
         @param fh: file object, incase we need to print to file
         @return :
         @raise :
         """
-        print("   ",end="",file=fh)
-        print(*range(0,self.col),sep="  ",file=fh)
+        print("   ", end="", file=fh)
+        print(*range(0, self.col), sep="  ", file=fh)
         # index for debugging easily
         for i, row in enumerate(self.board):
-            print(i, end="",file=fh)
+            print(i, end="", file=fh)
             # index for debugging easily
             for j, col in enumerate(row):
                 king = self.board[i][j].is_king
                 if king:
-                    print("%3s" % str(self.board[i][j].get_color()).upper(), end="",file=fh)
+                    print("%3s" % str(self.board[i][j].get_color()).upper(), end="", file=fh)
                 else:
-                    print("%3s" % str(self.board[i][j].get_color()).lower(), end = "",file=fh)
+                    print("%3s" % str(self.board[i][j].get_color()).lower(), end="", file=fh)
                 # print("%3s" % str(self.board[i][j]), end="")
             print(file=fh)
-        print('----------------------',file=fh)
+        print('----------------------', file=fh)
 
     def check_initial_variable(self):
         """
@@ -353,7 +366,7 @@ class Board:
         """
         # Q > 0
         if self.row - 2 * self.p <= 0:
-            raise  InvalidParameterError("Q <= 0")
+            raise InvalidParameterError("Q <= 0")
         # M = 2P + Q
         elif self.row != 2 * self.p + (self.row - 2 * self.p):
             raise InvalidParameterError("M != 2P + Q")
@@ -371,7 +384,7 @@ class Board:
         """
         # Q > 0
         if self.row - 2 * self.p <= 0:
-            raise  InvalidParameterError("Q <= 0")
+            raise InvalidParameterError("Q <= 0")
         # M = 2P + Q
         elif self.row != 2 * self.p + (self.row - 2 * self.p):
             raise InvalidParameterError("M != 2P + Q")
@@ -385,19 +398,19 @@ class Board:
             original_point = temp_saved_move[0][0]
             target_point = temp_saved_move[0][-1]
 
-            
- #           original_point = self.saved_move[0][0]
- #           target_point = self.saved_move[0][-1]
+            #           original_point = self.saved_move[0][0]
+            #           target_point = self.saved_move[0][-1]
             self.board[original_point[0]][original_point[1]].color = self.board[target_point[0]][target_point[1]].color
-            if temp_saved_move[2]: #self.saved_move[2]: #if became king in that move, cancel that
+            if temp_saved_move[2]:  # self.saved_move[2]: #if became king in that move, cancel that
                 self.board[original_point[0]][original_point[1]].is_king = False
             else:
-                self.board[original_point[0]][original_point[1]].is_king = self.board[target_point[0]][target_point[1]].is_king
+                self.board[original_point[0]][original_point[1]].is_king = self.board[target_point[0]][
+                    target_point[1]].is_king
             if target_point != original_point:
                 self.board[target_point[0]][target_point[1]].color = "."
                 self.board[target_point[0]][target_point[1]].is_king = False
-            for saved_enemy in temp_saved_move[1]:#self.saved_move[1]:
-                x,y,c,k = saved_enemy
+            for saved_enemy in temp_saved_move[1]:  # self.saved_move[1]:
+                x, y, c, k = saved_enemy
                 self.board[x][y].color = c
                 self.board[x][y].is_king = k
             self.tie_counter -= 1
@@ -408,32 +421,25 @@ class Board:
         self.white_count = 0
         for i in range(self.row):
             for j in range(self.col):
-                if self.board[i][j].color=="W":
+                if self.board[i][j].color == "W":
                     self.white_count += 1
                 elif self.board[i][j].color == "B":
                     self.black_count += 1
 
 
-
-
-
-
 if __name__ == "__main__":
-
-
-    b=Board(7,7,2)
+    b = Board(7, 7, 2)
     b.board[1][3] = Checker.Checker("W", [1, 3])
 
-
     b.show_board()
     m = b.get_all_possible_moves("W")[0][0]
-    b.make_move(m,"W")
+    b.make_move(m, "W")
     b.show_board()
     m = b.get_all_possible_moves("W")[0][0]
-    b.make_move(m,"W")
+    b.make_move(m, "W")
     b.show_board()
     m = b.get_all_possible_moves("W")[0][0]
-    b.make_move(m,"W")
+    b.make_move(m, "W")
     b.show_board()
     print("Undo")
     b.undo()
@@ -444,5 +450,3 @@ if __name__ == "__main__":
     print("Undo")
     b.undo()
     b.show_board()
-
-
