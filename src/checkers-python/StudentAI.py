@@ -41,7 +41,7 @@ class StudentAI:
 
         # A list of moves with the best heuristic
         bestMoves = []
-        bestHeuristic = -1
+        bestHeuristic = 1000000000
 
         # Go through all moves in the list of all possible moves
         for m in moves:
