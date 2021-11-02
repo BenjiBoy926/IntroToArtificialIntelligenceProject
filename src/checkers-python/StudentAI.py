@@ -34,6 +34,8 @@ class StudentAI:
         # Get all possible moves
         moves = self.board.get_all_possible_moves(self.color)
 
+        print(moves[0][0])
+
         # Check if the possible moves exist
         if len(moves) <= 0:
             raise RuntimeError("StudentAI: tried to get a move, but no possible moves could be found. "
