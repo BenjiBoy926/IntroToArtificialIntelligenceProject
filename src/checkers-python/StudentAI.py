@@ -4,7 +4,9 @@ from BoardClasses import Board
 
 # How to run the code locally:
 # From <project_dir>/Tools
-# python3 AI_Runner.py 7 7 2 Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
+"""
+python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
+"""
 
 # StudentAI class
 
@@ -84,7 +86,7 @@ class StudentAI:
             heuristic -= abs(move[index][0] - move[index + 1][0])
             # Decrease heuristic by vertical distance between this and next move
             heuristic -= abs(move[index][1] - move[index + 1][1])
-        return 0
+        return heuristic
 
     # Given a list of moves with the same heuristic,
     # use some tie breaking method to choose one of the moves
