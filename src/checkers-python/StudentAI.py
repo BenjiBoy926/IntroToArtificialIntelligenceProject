@@ -71,9 +71,6 @@ class StudentAI:
         else:
             move = self.heuristic_tiebreaker(bestMoves)
 
-        # Set the move equal to just the furthest move in the list
-        move = move[len(move) - 1]
-
         # Make a new move using the randomly selected element of the randomly selected move
         self.board.make_move(move, self.color)
         return move
