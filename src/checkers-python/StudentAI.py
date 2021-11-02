@@ -36,6 +36,10 @@ class StudentAI:
         # Get all possible moves
         moves = self.board.get_all_possible_moves(self.color)
 
+        print(f"All moves type: {type(moves)}")
+        print(f"Element of moves type: {type(moves[0])}")
+        print(f"Element of element of moves type: {type(moves[0][0])}")
+
         # Check if the possible moves exist
         if len(moves) <= 0:
             raise RuntimeError("StudentAI: tried to get a move, but no possible moves could be found. "
@@ -79,8 +83,6 @@ class StudentAI:
     # Get the heuristic value of a move
     # The SMALLER the heuristic value, the BETTER the move
     def move_heuristic(self, move):
-        print("Move type: " + str(type(move)))
-        print("Move element type: " + str(type(move[0])))
         heuristic = 0
         for index in range(len(move) - 1):
             # Decrease heuristic by horizontal distance between this and next move
