@@ -33,13 +33,9 @@ class StudentAI:
         else:
             self.color = 1
 
-        # Get all possible moves
+        # Get all possible moves. Each element in the list is itself a list of all the moves
+        # that one particular checker on the board can make
         moves = self.board.get_all_possible_moves(self.color)
-
-        print(f"All moves: {moves}")
-        print(f"Element of moves: {moves[0]}")
-        print(f"Element of element of moves: {moves[0][0]}")
-        print(f"Element of element of element of moves: {moves[0][0][0]}")
 
         # Check if the possible moves exist
         if len(moves) <= 0:
@@ -51,21 +47,22 @@ class StudentAI:
         bestHeuristic = 1000000000
 
         # Go through all moves in the list of all possible moves
-        for m in moves:
-            # get the heuristic of the current move
-            currentHeuristic = self.move_heuristic(m)
+        for checkers_moves in moves:
+            for move in checkers_moves:
+                # get the heuristic of the current move
+                currentHeuristic = self.move_heuristic(move)
 
-            # If the current move is better than the best so far,
-            # clear out the list and add this move to it
-            if currentHeuristic < bestHeuristic:
-                bestMoves.clear()
-                bestMoves.append(m)
-                bestHeuristic = currentHeuristic
+                # If the current move is better than the best so far,
+                # clear out the list and add this move to it
+                if currentHeuristic < bestHeuristic:
+                    bestMoves.clear()
+                    bestMoves.append(move)
+                    bestHeuristic = currentHeuristic
 
-            # If the current move has the same heuristic as the best so far,
-            # add this move to the list of best moves
-            elif currentHeuristic == bestHeuristic:
-                bestMoves.append(m)
+                # If the current move has the same heuristic as the best so far,
+                # add this move to the list of best moves
+                elif currentHeuristic == bestHeuristic:
+                    bestMoves.append(m)
 
         # If there was only one move then set it to that move
         if len(bestMoves) == 1:
