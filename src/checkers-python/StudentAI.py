@@ -62,7 +62,7 @@ class StudentAI:
                 # If the current move has the same heuristic as the best so far,
                 # add this move to the list of best moves
                 elif currentHeuristic == bestHeuristic:
-                    bestMoves.append(m)
+                    bestMoves.append(move)
 
         # If there was only one move then set it to that move
         if len(bestMoves) == 1:
