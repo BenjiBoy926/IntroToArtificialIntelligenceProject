@@ -2,7 +2,9 @@ from random import randint
 from BoardClasses import Move
 from BoardClasses import Board
 
-# Static functions unrelated to the class itself
+# How to run the code locally:
+# From <project_dir>/Tools
+# python3 AI_Runner.py 7 7 2 Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
 
 # StudentAI class
 
@@ -33,8 +35,6 @@ class StudentAI:
 
         # Get all possible moves
         moves = self.board.get_all_possible_moves(self.color)
-
-        print(moves[0][0])
 
         # Check if the possible moves exist
         if len(moves) <= 0:
@@ -79,6 +79,12 @@ class StudentAI:
     # Get the heuristic value of a move
     # The SMALLER the heuristic value, the BETTER the move
     def move_heuristic(self, move):
+        heuristic = 0
+        for index in range(len(move) - 1):
+            # Decrease heuristic by horizontal distance between this and next move
+            heuristic -= abs(move[index][0] - move[index + 1][0])
+            # Decrease heuristic by vertical distance between this and next move
+            heuristic -= abs(move[index][1] - move[index + 1][1])
         return 0
 
     # Given a list of moves with the same heuristic,
