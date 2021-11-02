@@ -36,9 +36,10 @@ class StudentAI:
         # Get all possible moves
         moves = self.board.get_all_possible_moves(self.color)
 
-        print(f"All moves type: {type(moves)}")
-        print(f"Element of moves type: {type(moves[0])}")
-        print(f"Element of element of moves type: {type(moves[0][0])}")
+        print(f"All moves: {moves}")
+        print(f"Element of moves: {moves[0]}")
+        print(f"Element of element of moves: {moves[0][0]}")
+        print(f"Element of element of element of moves: {moves[0][0][0]}")
 
         # Check if the possible moves exist
         if len(moves) <= 0:
