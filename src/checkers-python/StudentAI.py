@@ -79,7 +79,7 @@ class StudentAI:
     # Get the heuristic value of a move
     # The SMALLER the heuristic value, the BETTER the move
     def move_heuristic(self, move):
-        #print(f"Move type: {type(move)}")
+        print("Move type: " + type(move))
         heuristic = 0
         for index in range(len(move) - 1):
             # Decrease heuristic by horizontal distance between this and next move
