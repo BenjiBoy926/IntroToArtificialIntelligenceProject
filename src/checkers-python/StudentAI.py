@@ -1,12 +1,53 @@
 from random import randint
 from BoardClasses import Move
 from BoardClasses import Board
+import copy
 
-# How to run the code locally:
-# From <project_dir>/Tools
 """
+How to run the code locally:
+From <project_dir>/Tools
 python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
 """
+
+# Describes a node in a search tree.
+class GameStateNode:
+    def __init__(self, parent, board, color):
+        self.board = board
+        self.opponent = {1: 2, 2: 1}
+        self.color = color
+
+        self.parent = parent
+        self.children = []
+
+    # Expand the node by filling the children with a list of all boards for all moves that result from this board
+    def expand(self):
+        moves = self.board.get_all_possible_moves(self.color)
+
+        # Iterate over all moves in the possible moves
+        for checker_moves in moves:
+            # Iterate over each move that this checker can make
+            for move in checker_moves:
+                # Get a copy of the board that results from this move
+                resulting_board = self.resulting_board(move, self.color)
+
+                # Create a tree node to hold the new board
+                child = GameStateNode(self, resulting_board, self.opponent[self.color])
+                self.children.append(child)
+
+    def resulting_board(self, move, turn):
+        new_board = copy.deepcopy(self.board)
+        new_board.make_move(move, turn)
+        return new_board
+
+    # Return a heuristic value for the board in this node.
+    # Smaller values are good for player 1
+    # Larger values are good for player 2
+    def heuristic(self):
+        return self.board.white_count - self.board.black_count
+
+    # Determine if this board is in the win state for a given player
+    def is_win(self):
+        return self.board.is_win(self.color)
 
 # StudentAI class
 
@@ -74,6 +115,7 @@ class StudentAI:
             move = self.heuristic_tiebreaker(bestMoves)
 
         # Make a new move using the randomly selected element of the randomly selected move
+        # This modifies our copy of the board so that it matches the game's copy
         self.board.make_move(move, self.color)
         return move
 
