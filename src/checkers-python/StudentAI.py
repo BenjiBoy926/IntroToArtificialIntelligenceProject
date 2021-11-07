@@ -199,7 +199,7 @@ class StudentAI:
         print("Retrieving minimax choice from search tree...")
         move = tree_root.minimax_choice().inciting_move
 
-        print(f"Minimax decision computed. Resulting move: {move}")
+        print("Minimax decision computed. Resulting move: " + move)
 
         # Modify the board using the selected move
         self.board.make_move(move, self.color)
