@@ -126,6 +126,8 @@ class GameStateNode:
 
         # Add a node for each state to this list of children
         for state in resulting_states:
+            # Make sure that some states can result from this state. If no states result from this state,
+            # it crashes our current minimax algorithm
             resulting_states = state.get_all_resulting_states()
 
             if len(resulting_states) > 0:
@@ -197,7 +199,7 @@ class StudentAI:
         self.color = 2
 
         # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
-        self.search_depth = 1
+        self.search_depth = 2
 
         # output file used by student ai
         self.output = open("output.txt", "w")
