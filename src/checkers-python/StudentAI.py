@@ -14,6 +14,8 @@ python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python
 # Static functions
 
 # Get the board that results from the given move on the given player's turn
+# NOTE: maybe later for memory efficiency we should use the same board and make moves / undo moves
+# as we move down / up the tree. Just a thought
 def resulting_board(board, move, player_number):
     new_board = copy.deepcopy(board)
     new_board.make_move(move, player_number)
@@ -49,16 +51,13 @@ def better_board(board1, board2, player_num):
         raise ValueError("Player number must be either a 1 or a 2")
 
 
-# Given two states for the same player, return the state that would be best for that player
-def better_state(state1, state2):
-    if state1.player_number == state2.player_number:
-        board = better_board(state1.board, state2.board, state1.player_number)
-        if board == state1.board:
-            return state1
-        else:
-            return state2
+# Given two states, return the state that would be best for the given player
+def better_state(state1, state2, player_number):
+    board = better_board(state1.board, state2.board, player_number)
+    if board == state1.board:
+        return state1
     else:
-        raise ValueError("These states cannot be compared because they do not occur on the same player's turn")
+        return state2
 
 
 # Get the heuristic value of a move
@@ -107,6 +106,9 @@ class GameState:
         # Return the list of resulting states
         return resulting_states
 
+    def is_win(self):
+        return self.board.is_win(self.player_number) == self.player_number
+
 
 class GameStateNode:
     def __init__(self, state, parent=None):
@@ -124,6 +126,20 @@ class GameStateNode:
         for state in resulting_states:
             self.children.append(GameStateNode(state, self))
 
+    # Return the depth of this node, 0 if it has no parent
+    def depth(self):
+        current_depth = 0
+        current_node = self.parent
+
+        # Loop until the current node is none
+        while current_node is not None:
+            current_depth += 1
+
+            # Update current to its own parent
+            current_node = current_node.parent
+
+        return current_depth
+
     # Use the minimax algorithm to decide which state is the best state to go to
     # for the current player at this node
     # Return the state object that is best for this player
@@ -138,7 +154,10 @@ class GameStateNode:
             states_to_reduce = [child.minimax_choice() for child in self.children]
 
         # Reduce the list down to the best state in the list for this player
-        return functools.reduce(better_state, states_to_reduce)
+        return functools.reduce(self.my_better_state, states_to_reduce)
+
+    def my_better_state(self, state1, state2):
+        return better_state(state1, state2, self.state.player_number)
 
 
 # StudentAI class
@@ -159,7 +178,7 @@ class StudentAI:
         self.color = 2
 
         # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
-        self.search_depth = 4
+        self.search_depth = 2
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -172,47 +191,14 @@ class StudentAI:
         else:
             self.color = 1
 
-        # Get all possible moves. Each element in the list is itself a list of all the moves
-        # that one particular checker on the board can make
-        moves = self.board.get_all_possible_moves(self.color)
+        # Build the search tree and get its minimax decision
+        tree_root = self.build_search_tree(move)
+        move = tree_root.minimax_choice().inciting_move
 
-        # Check if the possible moves exist
-        if len(moves) <= 0:
-            raise RuntimeError("StudentAI: tried to get a move, but no possible moves could be found. "
-                               "Are you sure the game hasn't already ended?")
-
-        # A list of moves with the best heuristic
-        bestMoves = []
-        bestHeuristic = 1000000000
-
-        # Go through all moves in the list of all possible moves
-        for checkers_moves in moves:
-            for move in checkers_moves:
-                # get the heuristic of the current move
-                currentHeuristic = move_heuristic(move)
-
-                # If the current move is better than the best so far,
-                # clear out the list and add this move to it
-                if currentHeuristic < bestHeuristic:
-                    bestMoves.clear()
-                    bestMoves.append(move)
-                    bestHeuristic = currentHeuristic
-
-                # If the current move has the same heuristic as the best so far,
-                # add this move to the list of best moves
-                elif currentHeuristic == bestHeuristic:
-                    bestMoves.append(move)
-
-        # If there was only one move then set it to that move
-        if len(bestMoves) == 1:
-            move = bestMoves[0]
-        # If multiple moves had the same heuristic use the tiebreaker to choose one from the list
-        else:
-            move = heuristic_tiebreaker(bestMoves)
-
-        # Make a new move using the randomly selected element of the randomly selected move
-        # This modifies our copy of the board so that it matches the game's copy
+        # Modify the board using the selected move
         self.board.make_move(move, self.color)
+
+        # Return the selected move back to the caller
         return move
 
     def build_search_tree(self, inciting_move):
@@ -222,8 +208,20 @@ class StudentAI:
 
         # Create the root node from the current game state
         root = GameStateNode(GameState(self.board, self.color, inciting_move))
+        queue = [root]
 
-        for i in range(self.search_depth):
-            root.expand()
+        # Loop until no nodes remain in the queue for expanding
+        while len(queue) > 0:
+            # Pop the current node out of the front of the queue
+            current = queue.pop(0)
 
+            # If the current node's depth is less than the target search depth,
+            # then expand it and add all it's children to the queue
+            if current.depth() < self.search_depth * 2:
+                current.expand()
+
+                for child in current.children:
+                    queue.append(child)
+
+        # Return the root of the search tree
         return root
