@@ -211,15 +211,15 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
-        print("Build the search tree...")
+        # print("Build the search tree...")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
-        print(f"Tree constructed, getting minimax choice...")
+        # print(f"Tree constructed, getting minimax choice...")
         move = tree_root.minimax_choice().inciting_move
 
         # Modify the board using the selected move
-        print(f"Minimax decision made: {move}")
+        # print(f"Minimax decision made: {move}")
         self.board.make_move(move, self.color)
 
         # Return the selected move back to the caller
