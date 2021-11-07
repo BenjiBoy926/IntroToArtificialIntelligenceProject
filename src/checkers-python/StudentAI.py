@@ -150,23 +150,30 @@ class GameStateNode:
         # that directly result from this one
         if len(self.children) <= 0:
             states_to_reduce = self.state.get_all_resulting_states()
-            print("LEAF NODE")
+            return functools.reduce(self.my_better_state, states_to_reduce)
         # If this node has children, the states to reduce is the list of all states
         # chosen by child nodes of this node
         else:
-            states_to_reduce = [child.minimax_choice() for child in self.children]
-            print("NORMAL NODE")
-
-        # Get the result of reducing all states based on the best state
-        print(f"\tStates to reduce: {[state.inciting_move for state in states_to_reduce]}")
-        reduction = functools.reduce(self.my_better_state, states_to_reduce)
-        print(f"\tState chosen: {reduction.inciting_move}")
-
-        # Reduce the list down to the best state in the list for this player
-        return reduction
+            reduced_child = functools.reduce(self.my_better_child, self.children)
+            return reduced_child.state
 
     def my_better_state(self, state1, state2):
         return better_state(state1, state2, self.state.player_number)
+
+    # Get the child whose minimax decision is best for this node
+    def my_better_child(self, child1, child2):
+        # Get the minimax choices of the two children
+        choice1 = child1.minimax_choice()
+        choice2 = child2.minimax_choice()
+
+        # Choose the better state for this node
+        better_minimax = better_state(choice1, choice2, self.state.player_number)
+
+        # Return the correct child
+        if better_minimax == choice1:
+            return child1
+        else:
+            return child2
 
 
 # StudentAI class
