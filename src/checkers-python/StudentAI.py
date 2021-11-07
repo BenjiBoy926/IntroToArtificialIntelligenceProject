@@ -199,6 +199,7 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
+        print("Build the search tree...")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
