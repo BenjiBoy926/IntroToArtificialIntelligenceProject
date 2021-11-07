@@ -185,8 +185,7 @@ class StudentAI:
         self.search_depth = 2
 
         # output file used by student ai
-        global output
-        output = open("output.txt", "w")
+        self.output = open("output.txt", "w")
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -200,14 +199,14 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
-        output.write("Building search tree...\n")
+        self.output.write("Building search tree...\n")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
-        output.write("Retrieving minimax choice from search tree...")
+        self.output.write("Retrieving minimax choice from search tree...\n")
         move = tree_root.minimax_choice().inciting_move
 
-        print("Minimax decision computed. Resulting move: " + move)
+        self.output.write(f"Minimax decision computed. Resulting move: {move}\n")
 
         # Modify the board using the selected move
         self.board.make_move(move, self.color)
