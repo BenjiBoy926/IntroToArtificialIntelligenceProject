@@ -8,9 +8,10 @@ import copy
 How to run the code locally:
 From <project_dir>/Tools
 python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
-"""
 
-output = None
+Manual play:
+python3 main.py 7 7 2 m start_player 0
+"""
 
 # Static functions
 
@@ -203,9 +204,11 @@ class StudentAI:
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
+        print(f"Tree constructed, getting minimax choice...")
         move = tree_root.minimax_choice().inciting_move
 
         # Modify the board using the selected move
+        print(f"Minimax decision made: {move}")
         self.board.make_move(move, self.color)
 
         # Return the selected move back to the caller
