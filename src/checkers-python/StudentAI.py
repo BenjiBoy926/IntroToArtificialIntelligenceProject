@@ -182,7 +182,7 @@ class StudentAI:
         self.color = 2
 
         # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
-        self.search_depth = 2
+        self.search_depth = 0
 
         # output file used by student ai
         self.output = open("output.txt", "w")
@@ -199,14 +199,10 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
-        self.output.write("Building search tree...\n")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
-        self.output.write("Retrieving minimax choice from search tree...\n")
         move = tree_root.minimax_choice().inciting_move
-
-        self.output.write(f"Minimax decision computed. Resulting move: {move}\n")
 
         # Modify the board using the selected move
         self.board.make_move(move, self.color)
