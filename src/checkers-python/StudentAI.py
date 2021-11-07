@@ -10,6 +10,7 @@ From <project_dir>/Tools
 python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
 """
 
+output = None
 
 # Static functions
 
@@ -147,17 +148,14 @@ class GameStateNode:
         # If this node has no children, the states to reduce is the list of all states
         # that directly result from this one
         if len(self.children) <= 0:
-            print("Getting all states resulting from this state")
             states_to_reduce = self.state.get_all_resulting_states()
         # If this node has children, the states to reduce is the list of all states
         # chosen by child nodes of this node
         else:
-            print("Getting all minimax decisions of all children")
             states_to_reduce = [child.minimax_choice() for child in self.children]
 
         # Get the result of reducing all states based on the best state
         reduction = functools.reduce(self.my_better_state, states_to_reduce)
-        print(f"Reduced state: {reduction}")
 
         # Reduce the list down to the best state in the list for this player
         return reduction
@@ -186,6 +184,10 @@ class StudentAI:
         # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
         self.search_depth = 2
 
+        # output file used by student ai
+        global output
+        output = open("output.txt", "w")
+
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
     # or an invalid move if we get to move first
@@ -198,11 +200,11 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
-        print("Building search tree...")
+        output.write("Building search tree...\n")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
-        print("Retrieving minimax choice from search tree...")
+        output.write("Retrieving minimax choice from search tree...")
         move = tree_root.minimax_choice().inciting_move
 
         print("Minimax decision computed. Resulting move: " + move)
