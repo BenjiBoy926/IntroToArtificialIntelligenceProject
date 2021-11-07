@@ -147,14 +147,20 @@ class GameStateNode:
         # If this node has no children, the states to reduce is the list of all states
         # that directly result from this one
         if len(self.children) <= 0:
+            print("Getting all states resulting from this state")
             states_to_reduce = self.state.get_all_resulting_states()
         # If this node has children, the states to reduce is the list of all states
         # chosen by child nodes of this node
         else:
+            print("Getting all minimax decisions of all children")
             states_to_reduce = [child.minimax_choice() for child in self.children]
 
+        # Get the result of reducing all states based on the best state
+        reduction = functools.reduce(self.my_better_state, states_to_reduce)
+        print(f"Reduced state: {reduction}")
+
         # Reduce the list down to the best state in the list for this player
-        return functools.reduce(self.my_better_state, states_to_reduce)
+        return reduction
 
     def my_better_state(self, state1, state2):
         return better_state(state1, state2, self.state.player_number)
