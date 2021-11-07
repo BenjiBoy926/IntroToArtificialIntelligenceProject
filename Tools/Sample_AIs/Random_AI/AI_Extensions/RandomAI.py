@@ -44,8 +44,6 @@ class StudentAI():
             self.board.make_move(move,self.opponent[self.color])
         else:
             self.color = 1
-        print("Hello, will this mess things up?")
-        print("Sup")
         moves = self.board.get_all_possible_moves(self.color)
         index = randint(0,len(moves)-1)
         inner_index =  randint(0,len(moves[index])-1)

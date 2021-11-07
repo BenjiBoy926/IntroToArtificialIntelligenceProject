@@ -147,17 +147,17 @@ class GameStateNode:
         # If this node has no children, the states to reduce is the list of all states
         # that directly result from this one
         if len(self.children) <= 0:
-            print("Getting all states resulting from this state")
+            # print("Getting all states resulting from this state")
             states_to_reduce = self.state.get_all_resulting_states()
         # If this node has children, the states to reduce is the list of all states
         # chosen by child nodes of this node
         else:
-            print("Getting all minimax decisions of all children")
+            # print("Getting all minimax decisions of all children")
             states_to_reduce = [child.minimax_choice() for child in self.children]
 
         # Get the result of reducing all states based on the best state
         reduction = functools.reduce(self.my_better_state, states_to_reduce)
-        print(f"Reduced state: {reduction}")
+        # print(f"Reduced state: {reduction}")
 
         # Reduce the list down to the best state in the list for this player
         return reduction
@@ -198,14 +198,14 @@ class StudentAI:
             self.color = 1
 
         # Build the search tree
-        print("Building search tree...")
+        # print("Building search tree...")
         tree_root = self.build_search_tree(move)
 
         # Get the minimax choice of the search tree
-        print("Retrieving minimax choice from search tree...")
+        # print("Retrieving minimax choice from search tree...")
         move = tree_root.minimax_choice().inciting_move
 
-        print("Minimax decision computed. Resulting move: " + move)
+        # print("Minimax decision computed. Resulting move: " + move)
 
         # Modify the board using the selected move
         self.board.make_move(move, self.color)
