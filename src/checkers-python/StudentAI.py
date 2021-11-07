@@ -199,7 +199,7 @@ class StudentAI:
         self.color = 2
 
         # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
-        self.search_depth = 2
+        self.search_depth = 1
 
         # output file used by student ai
         self.output = open("output.txt", "w")
