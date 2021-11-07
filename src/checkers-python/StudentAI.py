@@ -156,7 +156,9 @@ class GameStateNode:
             states_to_reduce = [child.minimax_choice() for child in self.children]
 
         # Get the result of reducing all states based on the best state
+        print(f"States to reduce: {states_to_reduce.inciting_move}")
         reduction = functools.reduce(self.my_better_state, states_to_reduce)
+        print(f"State chosen: {reduction.inciting_move}")
 
         # Reduce the list down to the best state in the list for this player
         return reduction
