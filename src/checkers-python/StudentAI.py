@@ -195,6 +195,8 @@ class StudentAI:
         tree_root = self.build_search_tree(move)
         move = tree_root.minimax_choice().inciting_move
 
+        print(move)
+
         # Modify the board using the selected move
         self.board.make_move(move, self.color)
 
