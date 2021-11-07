@@ -29,6 +29,7 @@ class IOAI():
             print("exception")
             raise Exception(err.decode())
         ai_move = ai_move.decode().split("\n")[-1].rstrip()
+        print(ai_move)
         return Move.from_str(ai_move)
 
     def close(self):
