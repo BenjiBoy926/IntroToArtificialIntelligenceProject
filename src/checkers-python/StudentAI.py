@@ -126,7 +126,10 @@ class GameStateNode:
 
         # Add a node for each state to this list of children
         for state in resulting_states:
-            self.children.append(GameStateNode(state, self))
+            resulting_states = state.get_all_resulting_states()
+
+            if len(resulting_states) > 0:
+                self.children.append(GameStateNode(state, self))
 
     # Return the depth of this node, 0 if it has no parent
     def depth(self):
