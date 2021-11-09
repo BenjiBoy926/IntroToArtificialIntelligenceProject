@@ -3,6 +3,7 @@ from BoardClasses import Move
 from BoardClasses import Board
 import functools
 import copy
+import math
 
 """
 How to run the code locally:
@@ -14,6 +15,15 @@ python3 main.py 7 7 2 m start_player 0
 """
 
 # Static functions
+
+# Given the current player's number, get the number of their opponent
+def opponent(player_number):
+    if player_number == 1:
+        return 2
+    elif player_number == 2:
+        return 1
+    else:
+        raise ValueError(f"Invalid player number '{player_number}'")
 
 # Get the board that results from the given move on the given player's turn
 # NOTE: maybe later for memory efficiency we should use the same board and make moves / undo moves
@@ -35,103 +45,67 @@ def board_heuristic(board):
     return board.white_count - board.black_count
 
 
-# Given two boards, return the board that would be best for the given player
-def better_board(board1, board2, player_num):
-    # Player 1 prefers smaller heuristics
-    if player_num == 1:
-        if board_heuristic(board1) < board_heuristic(board2):
-            return board1
-        else:
-            return board2
-    # Player 2 prefers bigger heuristics
-    elif player_num == 2:
-        if board_heuristic(board1) > board_heuristic(board2):
-            return board1
-        else:
-            return board2
-    else:
-        raise ValueError("Player number must be either a 1 or a 2")
-
-
-# Given two states, return the state that would be best for the given player
-def better_state(state1, state2, player_number):
-    board = better_board(state1.board, state2.board, player_number)
-    if board == state1.board:
-        return state1
-    else:
-        return state2
-
-
-# Get the heuristic value of a move
-# The SMALLER the heuristic value, the BETTER the move
-def move_heuristic(move):
-    heuristic = 0
-    for index in range(len(move) - 1):
-        # Decrease heuristic by horizontal distance between this and next move
-        heuristic -= abs(move[index][0] - move[index + 1][0])
-        # Decrease heuristic by vertical distance between this and next move
-        heuristic -= abs(move[index][1] - move[index + 1][1])
-    return heuristic
-
-
-# Given a list of moves with the same heuristic,
-# use some tie breaking method to choose one of the moves
-def heuristic_tiebreaker(moves):
-    return moves[randint(0, len(moves) - 1)]
-
-
-# Describes a state in the game. It has the current board, the current player's turn, and the move (if any)
-# that caused this state
-class GameState:
-    def __init__(self, board, player_number, inciting_move=None):
+class GameStateTree:
+    def __init__(self, root, board, exploration_constant):
+        self.root = root
         self.board = board
-        self.opponent = {1: 2, 2: 1}
-        self.player_number = player_number
-        self.inciting_move = inciting_move
+        self.exploration_constant = exploration_constant
 
-    # Get a list of all the states that can result from all the possible moves from this state
-    def get_all_resulting_states(self):
-        moves = self.board.get_all_possible_moves(self.player_number)
-        resulting_states = []
+    def choose_best_move(self):
+        # Select a leaf to simulate moves from
+        current = self.select()
 
-        # Iterate over all moves in the possible moves
-        for checker_moves in moves:
-            # Iterate over each move that this checker can make
-            for move in checker_moves:
-                # Get a copy of the board that results from this move
-                new_board = resulting_board(self.board, move, self.player_number)
+        # Expand this node...?
+        current.expand()
 
-                # Create a game state with the new board and next opponent's turn
-                child = GameState(new_board, self.opponent[self.player_number], move)
-                resulting_states.append(child)
+        # Then: simulate a game
+        # Finally: back propagate the results of the game
 
-        # Return the list of resulting states
-        return resulting_states
+    # The selection step of the Monte Carlo Tree search
+    # Compute the upper confidence bound and use it to select the child to go to
+    def select(self):
+        current = self.root
 
-    def is_win(self):
-        return self.board.is_win(self.player_number) == self.player_number
+        while not current.is_leaf():
+            # Reduce to the child with the best confidence
+            current = functools.reduce(self.better_confidence, current.children)
+
+            # Make that move on the board, preparing to simulate
+            self.board.make_move(current.inciting_move, current.player_number)
+
+        return current
+
+    # Given two nodes, choose the one with the better Monte Carlo algorithm confidence
+    def better_confidence(self, node1, node2):
+        if node1.confidence(self.exploration_constant) > node2.confidence(self.exploration_constant):
+            return node1
+        else:
+            return node2
 
 
 class GameStateNode:
-    def __init__(self, state, parent=None):
-        self.state = state
+    def __init__(self, player_number, inciting_move, parent=None):
         self.parent = parent
         self.children = []
 
-    # Fill this node's list of children with all resulting states
-    def expand(self):
-        # Get a list of all states that result from this state
-        resulting_states = self.state.get_all_resulting_states()
+        # Current player in this state and the move that resulted in this state
+        self.player_number = player_number
+        self.inciting_move = inciting_move
+
+        # Monte Carlo state
+        self.simulations = 0
+        self.wins = 0
+
+    # Expand this node by filling its list of children with all possible moves that can be made on the given board
+    def expand(self, board):
+        # Get a list of all possible moves on this board
+        moves = board.get_all_possible_moves(self.player_number)
         self.children = []
 
-        # Add a node for each state to this list of children
-        for state in resulting_states:
-            # Make sure that some states can result from this state. If no states result from this state,
-            # it crashes our current minimax algorithm
-            resulting_states = state.get_all_resulting_states()
-
-            if len(resulting_states) > 0:
-                self.children.append(GameStateNode(state, self))
+        # Add a child for each move in the list
+        for checker_moves in moves:
+            for move in checker_moves:
+                self.children.append(GameStateNode(opponent(self.player_number), move))
 
     # Return the depth of this node, 0 if it has no parent
     def depth(self):
@@ -147,38 +121,15 @@ class GameStateNode:
 
         return current_depth
 
-    # Use the minimax algorithm to decide which state is the best state to go to
-    # for the current player at this node
-    # Return the state object that is best for this player
-    def minimax_choice(self):
-        # If this node has no children, the states to reduce is the list of all states
-        # that directly result from this one
-        if len(self.children) <= 0:
-            states_to_reduce = self.state.get_all_resulting_states()
-            return functools.reduce(self.my_better_state, states_to_reduce)
-        # If this node has children, the states to reduce is the list of all states
-        # chosen by child nodes of this node
-        else:
-            reduced_child = functools.reduce(self.my_better_child, self.children)
-            return reduced_child.state
+    # True if this node is a leaf and has no children
+    def is_leaf(self):
+        return len(self.children) <= 0
 
-    def my_better_state(self, state1, state2):
-        return better_state(state1, state2, self.state.player_number)
-
-    # Get the child whose minimax decision is best for this node
-    def my_better_child(self, child1, child2):
-        # Get the minimax choices of the two children
-        choice1 = child1.minimax_choice()
-        choice2 = child2.minimax_choice()
-
-        # Choose the better state for this node
-        better_minimax = better_state(choice1, choice2, self.state.player_number)
-
-        # Return the correct child
-        if better_minimax == choice1:
-            return child1
-        else:
-            return child2
+    # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
+    def confidence(self, exploration_constant):
+        first_term = self.wins / self.simulations
+        square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
+        return first_term + exploration_constant * square_root_term
 
 
 # StudentAI class
@@ -236,7 +187,7 @@ class StudentAI:
             inciting_move = None
 
         # Create the root node from the current game state
-        root = GameStateNode(GameState(self.board, self.color, inciting_move))
+        root = GameStateNode(self.color, inciting_move)
         queue = [root]
 
         # Loop until no nodes remain in the queue for expanding
