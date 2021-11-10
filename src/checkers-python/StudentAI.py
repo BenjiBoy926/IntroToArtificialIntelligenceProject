@@ -274,7 +274,6 @@ class StudentAI:
             self.tree.update_root(move)
         # If our opponent did not previously make a move, that means we are player 1!
         else:
-            print("We are the first player! Changing color")
             self.color = 1
             self.tree.player_number = self.color
 
