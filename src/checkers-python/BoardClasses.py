@@ -182,7 +182,7 @@ class Board:
                                                                                                failed_position[1]])
                 self.board[ultimate_start[0]][ultimate_start[1]] = Checker.Checker(turn, [ultimate_start[0],
                                                                                           ultimate_start[1]])
-                raise InvalidMoveError(f"For move {move} on player turn {turn}")
+                raise InvalidMoveError(f"For move {move} on player {turn}")
 
         temp_saved_move[0] = copy.deepcopy(move)  # self.saved_move[0] = copy.deepcopy(move)
         temp_saved_move[1] = saved_enemy_position  # self.saved_move[1] = saved_enemy_position
