@@ -214,7 +214,7 @@ class GameStateNode:
         # Add a child for each move in the list
         for checker_moves in moves:
             for move in checker_moves:
-                self.children.append(GameStateNode(opponent(self.player_number), move))
+                self.children.append(GameStateNode(opponent(self.player_number), move, self))
 
     # Return the depth of this node, 0 if it has no parent
     def depth(self):
