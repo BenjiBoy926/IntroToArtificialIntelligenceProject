@@ -1,9 +1,9 @@
-from random import randint
 from BoardClasses import Move
 from BoardClasses import Board
 import functools
 import copy
 import math
+import random
 
 """
 How to run the code locally:
@@ -45,28 +45,44 @@ def board_heuristic(board):
     return board.white_count - board.black_count
 
 
+# Given two nodes, return the node with the better win ratio
+def better_win_ratio(node1, node2):
+    if node1.win_ratio() > node2.win_ratio():
+        return node1
+    else:
+        return node2
+
+
 class GameStateTree:
-    def __init__(self, root, board, exploration_constant):
-        self.root = root
+    def __init__(self, board, player_number, exploration_constant):
+        self.root = GameStateNode(player_number)
         self.board = board
+        self.player_number = player_number
         self.exploration_constant = exploration_constant
 
     def choose_best_move(self):
-        # Select a leaf to simulate moves from
-        current = self.select()
+        return functools.reduce(better_win_ratio, self.root.children).inciting_move
 
-        # Expand this node...?
-        current.expand()
+    def run_simulations(self, iterations):
+        for i in range(iterations):
+            # Select a leaf to simulate moves from
+            current = self.select()
 
-        # Then: simulate a game
-        # Finally: back propagate the results of the game
+            # Expand this node...?
+            current = self.expand(current)
+
+            # Simulate a game and determine if we win
+            we_won = self.simulate()
+
+            # Finally: back propagate the results of the game
+            self.back_propagate(current, we_won)
 
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
     def select(self):
         current = self.root
 
-        while not current.is_leaf():
+        while not current.is_leaf() and self.board.is_win(self.player_number) == 0:
             # Reduce to the child with the best confidence
             current = functools.reduce(self.better_confidence, current.children)
 
@@ -75,6 +91,62 @@ class GameStateTree:
 
         return current
 
+    # The expansion step of the Monte Carlo
+    # Expand the given node and choose a child to start the simulation from
+    def expand(self, selection):
+        # If this board is not a win for anyone, expand the given node and choose a node to simulate a game from
+        if self.board.is_win(self.player_number) == 0:
+            return selection
+        # If this board is a win for someone, give the same node back for this expansion step
+        else:
+            return selection
+
+    # The simulation step of the Monte Carlo
+    # Run a random game from the current board and return true if we won and false if not
+    def simulate(self):
+        total_moves = 0
+
+        # Make random moves on the board until a win state is found
+        while self.board.is_win(self, self.player_number) == 0:
+            moves = self.board.get_all_possible_moves(self.player_number)
+
+            # Get a random checker and a random move for the checker
+            random_checker = random.randrange(0, len(moves))
+            random_move = random.randrange(0, len(moves[random_checker]))
+
+            # Make the random move on the current board
+            move = moves[random_checker][random_move]
+            self.board.make_move(move, self.player_number)
+
+            # Increment total moves
+            total_moves += 1
+
+        # Get the final result of the simulation
+        result = self.board.is_win(self.player_number)
+
+        # Undo all the moves you just did so we have the correct board state
+        for i in range(total_moves):
+            self.board.undo()
+
+        # Return true if we won
+        return result == self.player_number
+
+    # Back propagate the result of a simulation from the given leaf node
+    def back_propagate(self, current, we_won):
+        while current is not None:
+            # Undo the move that got us to this board
+            self.board.undo()
+
+            # Increase number of simulations for this node
+            current.simulations += 1
+
+            # If we won, increase the wins for this node too
+            if we_won:
+                current.wins += 1
+
+            # Update the current node to back-propagate
+            current = current.parent
+
     # Given two nodes, choose the one with the better Monte Carlo algorithm confidence
     def better_confidence(self, node1, node2):
         if node1.confidence(self.exploration_constant) > node2.confidence(self.exploration_constant):
@@ -82,9 +154,24 @@ class GameStateTree:
         else:
             return node2
 
+    # Change the root of the tree to the child with the same inciting move
+    def update_root(self, move):
+        # Get a node in the children of the root with the same move as the one passed in
+        match = filter(lambda n: n.inciting_move == move, self.root.children)
+        # Get the next node in the iterator
+        node = next(match, None)
+
+        # If node is not none then update the root and the board
+        if node is not None:
+            self.root = node
+            self.board.make_move(move, self.player_number)
+        # If no child node is found that results from the given move, raise a value error
+        else:
+            raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
+
 
 class GameStateNode:
-    def __init__(self, player_number, inciting_move, parent=None):
+    def __init__(self, player_number, inciting_move=None, parent=None):
         self.parent = parent
         self.children = []
 
@@ -127,9 +214,11 @@ class GameStateNode:
 
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
     def confidence(self, exploration_constant):
-        first_term = self.wins / self.simulations
         square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
-        return first_term + exploration_constant * square_root_term
+        return self.win_ratio() + exploration_constant * square_root_term
+
+    def win_ratio(self):
+        return self.wins / self.simulations
 
 
 # StudentAI class
@@ -149,11 +238,8 @@ class StudentAI:
         # Start by assuming we are player 2
         self.color = 2
 
-        # Depth is in PLIES, not PLAYS, meaning it's the number of my move - their move pairs
-        self.search_depth = 1
-
-        # output file used by student ai
-        self.output = open("output.txt", "w")
+        # Build a tree for ourselves to use
+        self.tree = GameStateTree(self.board, self.color, 0.5)
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -162,46 +248,27 @@ class StudentAI:
         # If the opponent previously made a move, update our board to express it
         if len(move) != 0:
             self.board.make_move(move, self.opponent[self.color])
+            self.tree.update_root(move)
         # If our opponent did not previously make a move, that means we are player 1!
         else:
             self.color = 1
+            self.tree.player_number = self.color
 
-        # Build the search tree
-        # print("Build the search tree...")
-        tree_root = self.build_search_tree(move)
+        # Run simulations on the tree
+        print("Running simulations...")
+        self.tree.run_simulations(1000)
 
         # Get the minimax choice of the search tree
-        # print(f"Tree constructed, getting minimax choice...")
-        move = tree_root.minimax_choice().inciting_move
+        print(f"Simulations complete, getting best move...")
+        move = self.tree.choose_best_move()
 
         # Modify the board using the selected move
-        # print(f"Minimax decision made: {move}")
+        print(f"Monte Carlo decision made: {move}")
         self.board.make_move(move, self.color)
+
+        # Update the root of the tree so it is in the correct position the next time it is our turn
+        print("Update root for the tree")
+        self.tree.update_root(move)
 
         # Return the selected move back to the caller
         return move
-
-    def build_search_tree(self, inciting_move):
-        # Make inciting move None instead of an invalid zero-length move
-        if len(inciting_move) <= 0:
-            inciting_move = None
-
-        # Create the root node from the current game state
-        root = GameStateNode(self.color, inciting_move)
-        queue = [root]
-
-        # Loop until no nodes remain in the queue for expanding
-        while len(queue) > 0:
-            # Pop the current node out of the front of the queue
-            current = queue.pop(0)
-
-            # If the current node's depth is less than the target search depth,
-            # then expand it and add all it's children to the queue
-            if current.depth() < self.search_depth * 2:
-                current.expand()
-
-                for child in current.children:
-                    queue.append(child)
-
-        # Return the root of the search tree
-        return root
