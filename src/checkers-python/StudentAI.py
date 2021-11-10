@@ -57,7 +57,6 @@ class GameStateTree:
     def __init__(self, board, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
         self.board = board
-        self.player_number = player_number
         self.exploration_constant = exploration_constant
 
     def choose_best_move(self):
@@ -82,7 +81,7 @@ class GameStateTree:
     def select(self):
         current = self.root
 
-        while not current.is_leaf() and self.board.is_win(self.player_number) == 0:
+        while not current.is_leaf() and self.board.is_win(self.root.player_number) == 0:
             # Reduce to the child with the best confidence
             current = functools.reduce(self.better_confidence, current.children)
 
@@ -95,7 +94,7 @@ class GameStateTree:
     # Expand the given node and choose a child to start the simulation from
     def expand(self, selection):
         # If this board is not a win for anyone, expand the given node and choose a node to simulate a game from
-        if self.board.is_win(self.player_number) == 0:
+        if self.board.is_win(self.root.player_number) == 0:
             selection.expand(self.board)
 
             # If some nodes were added after the expansion, select the first child
@@ -143,8 +142,8 @@ class GameStateTree:
         for i in range(total_moves):
             self.board.undo()
 
-        # Return true if we won
-        return result == self.player_number
+        # Return true if the root node won
+        return result == self.root.player_number
 
     # Back propagate the result of a simulation from the given leaf node
     def propagate(self, current, we_won):
