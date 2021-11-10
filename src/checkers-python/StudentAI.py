@@ -65,19 +65,15 @@ class GameStateTree:
 
     def run_simulations(self, iterations):
         for i in range(iterations):
-            print("Selecting a node...")
             # Select a leaf to simulate moves from
             current = self.select()
 
-            print("Expanding node...")
             # Expand this node and get the result
             current = self.expand(current)
 
-            print("Simulating from expanded node...")
             # Simulate a game and determine if we win
             we_won = self.simulate(current.player_number)
 
-            print("Propagating results...")
             # Back propagate the results of the game
             self.propagate(current, we_won)
 
@@ -104,12 +100,7 @@ class GameStateTree:
 
             # If some nodes were added after the expansion, select the first child
             if not selection.is_leaf():
-                for child in selection.children:
-                    print(f"\tSelection child move: {child.inciting_move}")
-
                 selection = selection.children[0]
-
-                print(f"Making move on board: {selection.inciting_move}")
 
                 # Update the board to reflect the state at the returned node
                 self.board.make_move(selection.inciting_move, selection.parent.player_number)
