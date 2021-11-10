@@ -125,12 +125,12 @@ class GameStateTree:
 
     # The simulation step of the Monte Carlo
     # Run a random game from the current board and return true if we won and false if not
-    def simulate(self):
+    def simulate(self, player_number):
         total_moves = 0
 
         # Make random moves on the board until a win state is found
-        while self.board.is_win(self.player_number) == 0:
-            moves = self.board.get_all_possible_moves(self.player_number)
+        while self.board.is_win(player_number) == 0:
+            moves = self.board.get_all_possible_moves(player_number)
 
             # Get a random checker and a random move for the checker
             random_checker = random.randrange(0, len(moves))
@@ -138,13 +138,15 @@ class GameStateTree:
 
             # Make the random move on the current board
             move = moves[random_checker][random_move]
-            self.board.make_move(move, self.player_number)
+            self.board.make_move(move, player_number)
 
             # Increment total moves
             total_moves += 1
+            # Update current player's move to their opponent
+            player_number = opponent(player_number)
 
         # Get the final result of the simulation
-        result = self.board.is_win(self.player_number)
+        result = self.board.is_win(player_number)
 
         # Undo all the moves you just did so we have the correct board state
         for i in range(total_moves):
