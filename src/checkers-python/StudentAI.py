@@ -104,7 +104,8 @@ class GameStateTree:
 
             # If some nodes were added after the expansion, select the first child
             if not selection.is_leaf():
-                print(f"Selections children: {selection.children}")
+                for child in selection.children:
+                    print(f"\tSelection child move: {child.inciting_move}")
 
                 selection = selection.children[0]
 
