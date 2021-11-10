@@ -87,7 +87,7 @@ class GameStateTree:
             current = functools.reduce(self.better_confidence, current.children)
 
             # Make that move on the board, preparing to simulate
-            self.board.make_move(current.inciting_move, current.player_number)
+            self.board.make_move(current.inciting_move, current.parent.player_number)
 
         return current
 
