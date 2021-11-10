@@ -80,6 +80,7 @@ class GameStateTree:
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
     def select(self):
+        print("Selecting a node")
         current = self.root
 
         while not current.is_leaf() and self.board.is_win(self.player_number) == 0:
@@ -275,7 +276,7 @@ class StudentAI:
 
         # Run simulations on the tree
         print("Running simulations...")
-        self.tree.run_simulations(1000)
+        self.tree.run_simulations(100)
 
         # Get the minimax choice of the search tree
         print(f"Simulations complete, getting best move...")
