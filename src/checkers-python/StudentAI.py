@@ -68,14 +68,14 @@ class GameStateTree:
             # Select a leaf to simulate moves from
             current = self.select()
 
-            # Expand this node...?
+            # Expand this node and get the result
             current = self.expand(current)
 
             # Simulate a game and determine if we win
             we_won = self.simulate()
 
-            # Finally: back propagate the results of the game
-            self.back_propagate(current, we_won)
+            # Back propagate the results of the game
+            self.propagate(current, we_won)
 
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
@@ -96,7 +96,20 @@ class GameStateTree:
     def expand(self, selection):
         # If this board is not a win for anyone, expand the given node and choose a node to simulate a game from
         if self.board.is_win(self.player_number) == 0:
-            return selection
+            selection.expand(self.board)
+
+            # If some nodes were added after the expansion, select the first child
+            if not selection.is_leaf():
+                selection = selection.children[0]
+
+                # Update the board to reflect the state at the returned node
+                self.board.make_move(selection.inciting_move, self.player_number)
+                return selection
+            # If no nodes were added in the expansion, return the same node
+            # This would be kind of weird, because it means we didn't win but the board has not possible moves
+            # If anything, the board should detect a tie at this point
+            else:
+                return selection
         # If this board is a win for someone, give the same node back for this expansion step
         else:
             return selection
@@ -132,7 +145,7 @@ class GameStateTree:
         return result == self.player_number
 
     # Back propagate the result of a simulation from the given leaf node
-    def back_propagate(self, current, we_won):
+    def propagate(self, current, we_won):
         while current is not None:
             # Undo the move that got us to this board
             self.board.undo()
@@ -214,11 +227,18 @@ class GameStateNode:
 
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
     def confidence(self, exploration_constant):
-        square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
-        return self.win_ratio() + exploration_constant * square_root_term
+        if self.simulations > 0:
+            square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
+            return self.win_ratio() + exploration_constant * square_root_term
+        # If this node is not simulated at all, we should definitely select it next!
+        else:
+            return math.inf
 
     def win_ratio(self):
-        return self.wins / self.simulations
+        if self.simulations > 0:
+            return self.wins / self.simulations
+        else:
+            return 0
 
 
 # StudentAI class
@@ -226,7 +246,6 @@ class GameStateNode:
 # The following part should be completed by students.
 # Students can modify anything except the class name and existing functions and variables.
 class StudentAI:
-
     def __init__(self, col, row, p):
         self.col = col
         self.row = row
@@ -239,7 +258,7 @@ class StudentAI:
         self.color = 2
 
         # Build a tree for ourselves to use
-        self.tree = GameStateTree(self.board, self.color, 0.5)
+        self.tree = GameStateTree(self.board, self.color, 2)
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
