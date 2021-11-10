@@ -158,8 +158,10 @@ class GameStateTree:
     # Back propagate the result of a simulation from the given leaf node
     def propagate(self, current, we_won):
         while current is not None:
-            # Undo the move that got us to this board
-            self.board.undo()
+            # If this node's parent is not none, then undo the move that got us to this node
+            # If it IS none, we know that this is the root node, so no move got us here
+            if current.parent is not None:
+                self.board.undo()
 
             # Increase number of simulations for this node
             current.simulations += 1
