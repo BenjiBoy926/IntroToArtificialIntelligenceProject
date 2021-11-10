@@ -65,15 +65,19 @@ class GameStateTree:
 
     def run_simulations(self, iterations):
         for i in range(iterations):
+            print("Selecting a node...")
             # Select a leaf to simulate moves from
             current = self.select()
 
+            print("Expanding node...")
             # Expand this node and get the result
             current = self.expand(current)
 
+            print("Simulating from expanded node...")
             # Simulate a game and determine if we win
             we_won = self.simulate()
 
+            print("Propagating results...")
             # Back propagate the results of the game
             self.propagate(current, we_won)
 
@@ -83,7 +87,6 @@ class GameStateTree:
         current = self.root
 
         while not current.is_leaf() and self.board.is_win(self.player_number) == 0:
-            print(f"Selecting node with children: {current.children}")
             # Reduce to the child with the best confidence
             current = functools.reduce(self.better_confidence, current.children)
 
