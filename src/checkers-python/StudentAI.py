@@ -87,7 +87,7 @@ class GameStateTree:
             current = functools.reduce(self.better_confidence, current.children)
 
             # Make that move on the board, preparing to simulate
-            self.board.make_move(current.inciting_move, current.parent.player_number)
+            current.make_move(self.board)
 
         return current
 
@@ -103,7 +103,7 @@ class GameStateTree:
                 selection = selection.children[0]
 
                 # Update the board to reflect the state at the returned node
-                self.board.make_move(selection.inciting_move, selection.parent.player_number)
+                selection.make_move(self.board)
                 return selection
             # If no nodes were added in the expansion, return the same node
             # This would be kind of weird, because it means we didn't win but the board has not possible moves
@@ -181,7 +181,7 @@ class GameStateTree:
         # If node is not none then update the root and the board
         if node is not None:
             self.root = node
-            self.board.make_move(move, self.player_number)
+            node.make_move(self.board)
         # If no child node is found that results from the given move, raise a value error
         else:
             raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
@@ -224,6 +224,16 @@ class GameStateNode:
             current_node = current_node.parent
 
         return current_depth
+
+    # Make the inciting move of this node using the player number of its parent
+    def make_move(self, board):
+        if self.inciting_move is not None:
+            if self.parent is not None:
+                board.make_move(self.inciting_move, self.parent.player_number)
+            else:
+                raise RuntimeError("This node has no parent who can make the inciting move on the board")
+        else:
+            raise RuntimeError("This node has no inciting move to make on the board")
 
     # True if this node is a leaf and has no children
     def is_leaf(self):
