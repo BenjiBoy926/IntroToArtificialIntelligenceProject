@@ -281,7 +281,7 @@ class StudentAI:
         else:
             print("We are the first player! Changing color")
             self.color = 1
-            # self.tree.player_number = self.color
+            self.tree.player_number = self.color
 
         # Run simulations on the tree
         print("Running simulations...")
