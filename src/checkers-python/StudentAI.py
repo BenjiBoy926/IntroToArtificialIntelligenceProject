@@ -112,7 +112,7 @@ class GameStateTree:
                 print(f"Making move on board: {selection.inciting_move}")
 
                 # Update the board to reflect the state at the returned node
-                self.board.make_move(selection.inciting_move, self.player_number)
+                self.board.make_move(selection.inciting_move, selection.parent.player_number)
                 return selection
             # If no nodes were added in the expansion, return the same node
             # This would be kind of weird, because it means we didn't win but the board has not possible moves
@@ -267,7 +267,7 @@ class StudentAI:
         self.color = 2
 
         # Build a tree for ourselves to use
-        self.tree = GameStateTree(self.board, opponent(self.color), 2)
+        self.tree = GameStateTree(self.board, self.color, 2)
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -281,7 +281,7 @@ class StudentAI:
         else:
             print("We are the first player! Changing color")
             self.color = 1
-            self.tree.player_number = opponent(self.color)
+            self.tree.player_number = self.color
 
         # Run simulations on the tree
         print("Running simulations...")
