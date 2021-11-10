@@ -105,6 +105,7 @@ class GameStateTree:
             # If some nodes were added after the expansion, select the first child
             if not selection.is_leaf():
                 selection = selection.children[0]
+                print(f"Making move on board: {selection.inciting_move}")
 
                 # Update the board to reflect the state at the returned node
                 self.board.make_move(selection.inciting_move, self.player_number)
