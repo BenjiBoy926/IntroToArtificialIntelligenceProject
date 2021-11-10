@@ -75,7 +75,7 @@ class GameStateTree:
 
             print("Simulating from expanded node...")
             # Simulate a game and determine if we win
-            we_won = self.simulate()
+            we_won = self.simulate(current.player_number)
 
             print("Propagating results...")
             # Back propagate the results of the game
