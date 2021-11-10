@@ -80,10 +80,10 @@ class GameStateTree:
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
     def select(self):
-        print("Selecting a node")
         current = self.root
 
         while not current.is_leaf() and self.board.is_win(self.player_number) == 0:
+            print(f"Selecting node with children: {current.children}")
             # Reduce to the child with the best confidence
             current = functools.reduce(self.better_confidence, current.children)
 
