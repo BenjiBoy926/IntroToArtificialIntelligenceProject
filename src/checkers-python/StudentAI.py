@@ -4,6 +4,7 @@ import functools
 import copy
 import math
 import random
+import collections
 
 """
 How to run the code locally:
@@ -45,14 +46,6 @@ def board_heuristic(board):
     return board.white_count - board.black_count
 
 
-# Given two nodes, return the node with the better win ratio
-def better_win_ratio(node1, node2):
-    if node1.win_ratio() > node2.win_ratio():
-        return node1
-    else:
-        return node2
-
-
 class GameStateTree:
     def __init__(self, board, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
@@ -60,7 +53,7 @@ class GameStateTree:
         self.exploration_constant = exploration_constant
 
     def choose_best_move(self):
-        return functools.reduce(better_win_ratio, self.root.children).inciting_move
+        return functools.reduce(self.better_win_ratio, self.root.children).inciting_move
 
     def run_simulations(self, iterations):
         for i in range(iterations):
@@ -71,10 +64,10 @@ class GameStateTree:
             current = self.expand(current)
 
             # Simulate a game and determine if we win
-            we_won = self.simulate(current.player_number)
+            result = self.simulate(current.player_number)
 
             # Back propagate the results of the game
-            self.propagate(current, we_won)
+            self.propagate(current, result)
 
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
@@ -105,7 +98,7 @@ class GameStateTree:
                 selection.make_move(self.board)
                 return selection
             # If no nodes were added in the expansion, return the same node
-            # This would be kind of weird, because it means we didn't win but the board has not possible moves
+            # This would be kind of weird, because it means we didn't win but the board has no possible moves
             # If anything, the board should detect a tie at this point
             else:
                 return selection
@@ -142,23 +135,18 @@ class GameStateTree:
         for i in range(total_moves):
             self.board.undo()
 
-        # Return true if the root node won
-        return result == self.root.player_number
+        # Return the result of the board
+        return result
 
     # Back propagate the result of a simulation from the given leaf node
-    def propagate(self, current, we_won):
+    def propagate(self, current, result):
         while current is not None:
             # If this node's parent is not none, then undo the move that got us to this node
             # If it IS none, we know that this is the root node, so no move got us here
             if current.parent is not None:
                 self.board.undo()
 
-            # Increase number of simulations for this node
-            current.simulations += 1
-
-            # If we won, increase the wins for this node too
-            if we_won:
-                current.wins += 1
+            current.update_simulations(result)
 
             # Update the current node to back-propagate
             current = current.parent
@@ -166,6 +154,13 @@ class GameStateTree:
     # Given two nodes, choose the one with the better Monte Carlo algorithm confidence
     def better_confidence(self, node1, node2):
         if node1.confidence(self.exploration_constant) > node2.confidence(self.exploration_constant):
+            return node1
+        else:
+            return node2
+
+    # Given two nodes, return the node with the better win ratio, based on the player number of the root
+    def better_win_ratio(self, node1, node2):
+        if node1.result_ratio(self.root.player_number) > node2.result_ratio(self.root.player_number):
             return node1
         else:
             return node2
@@ -197,7 +192,10 @@ class GameStateNode:
 
         # Monte Carlo state
         self.simulations = 0
-        self.wins = 0
+
+        # The simulation results is a dictionary that maps the board result
+        # to the number of times the node has gotten that result (default value of 0)
+        self.simulation_results = collections.defaultdict(lambda: 0)
 
     # Expand this node by filling its list of children with all possible moves that can be made on the given board
     def expand(self, board):
@@ -234,22 +232,30 @@ class GameStateNode:
         else:
             raise RuntimeError("This node has no inciting move to make on the board")
 
+    # Update the number of times that this node has been simulated,
+    # and the number of times it lead to the given result
+    def update_simulations(self, board_result):
+        self.simulations += 1
+        self.simulation_results[board_result] += 1
+
     # True if this node is a leaf and has no children
     def is_leaf(self):
         return len(self.children) <= 0
 
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
-    def confidence(self, exploration_constant):
+    def confidence(self, player_number, exploration_constant):
         if self.simulations > 0:
             square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
-            return self.win_ratio() + exploration_constant * square_root_term
+            return self.result_ratio(player_number) + exploration_constant * square_root_term
         # If this node is not simulated at all, we should definitely select it next!
         else:
             return math.inf
 
-    def win_ratio(self):
+    # Ration of times this node has gotten the given result
+    # over the number of times this node has been simulated
+    def result_ratio(self, result):
         if self.simulations > 0:
-            return self.wins / self.simulations
+            return self.simulation_results[result] / self.simulations
         else:
             return 0
 
