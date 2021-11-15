@@ -26,7 +26,6 @@ def opponent(player_number):
     else:
         raise ValueError(f"Invalid player number '{player_number}'")
 
-
 # Return a heuristic value for the board in this node.
 # Smaller values are good for player 1 (black)
 # Larger values are good for player 2 (white)
@@ -37,7 +36,8 @@ def opponent(player_number):
 def board_heuristic(board):
     return board.white_count - board.black_count
 
-
+# We have to check if the strings are equal because checking if the objects are equal
+# results in bad behaviour where moves that SHOULD be equal are not equal
 def moves_equal(move1, move2):
     return str(move1) == str(move2)
 
