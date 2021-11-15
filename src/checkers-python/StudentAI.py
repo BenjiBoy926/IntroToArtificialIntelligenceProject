@@ -177,19 +177,19 @@ class GameStateTree:
     # Change the root of the tree to the child with the same inciting move
     def update_root(self, move):
         # Get a node in the children of the root with the same move as the one passed in
-        match = filter(lambda n: node_incited_by_move(n, move), self.root.children)
+        match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
         # Get the next node in the iterator
         node = next(match, None)
 
         # If node is not none then update the root and the board
         if node is not None:
             node.make_move(self.board)
+
+            # Update the root, and erase its parent
             self.root = node
             self.root.parent = None
         # If no child node is found that results from the given move, raise a value error
         else:
-            for child in self.root.children:
-                print(f"\tChild move: {child.inciting_move}")
             raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
 
 
