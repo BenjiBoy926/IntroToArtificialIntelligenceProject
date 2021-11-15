@@ -58,20 +58,15 @@ class GameStateTree:
     def run_simulations(self, iterations):
         for i in range(iterations):
             # Select a leaf to simulate moves from
-            print(f"Running simulation #{i}")
-            print(f"\tSelecting node to start simulating from...")
             current = self.select()
 
             # Expand this node and get the result
-            print("\tExpanding selected node...")
             current = self.expand(current)
 
             # Simulate a game and determine if we win
-            print("\tSimulating a game...")
             result = self.simulate(current.player_number)
 
             # Back propagate the results of the game
-            print("\tPropagating the results of the simulation...")
             self.propagate(current, result)
 
     # The selection step of the Monte Carlo Tree search
@@ -118,12 +113,6 @@ class GameStateTree:
 
         # Make random moves on the board until a win state is found
         while self.board.is_win(player_number) == 0:
-            print(f"Simulating on board:")
-            self.board.show_board()
-            print(f"Current player: {player_number}")
-            print(f"\tWin state for this player: {self.board.is_win(player_number)}")
-            print(f"\tWin state for opponent:    {self.board.is_win(opponent(player_number))}")
-
             moves = self.board.get_all_possible_moves(player_number)
 
             # Get a random checker and a random move for the checker
