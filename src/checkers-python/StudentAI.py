@@ -118,6 +118,9 @@ class GameStateTree:
 
         # Make random moves on the board until a win state is found
         while self.board.is_win(player_number) == 0:
+            print(f"Simulating on board:")
+            self.board.show_board()
+
             moves = self.board.get_all_possible_moves(player_number)
 
             # Get a random checker and a random move for the checker
