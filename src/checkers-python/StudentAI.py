@@ -151,9 +151,13 @@ class GameStateTree:
             # Update the current node to back-propagate
             current = current.parent
 
-    # Given two nodes, choose the one with the better Monte Carlo algorithm confidence
+    # Given two nodes, choose the one with the better Monte Carlo selection confidence
     def better_confidence(self, node1, node2):
-        if node1.confidence(self.exploration_constant) > node2.confidence(self.exploration_constant):
+        confidence1 = node1.confidence(self.root.player_number, self.exploration_constant)
+        confidence2 = node2.confidence(self.root.player_number, self.exploration_constant)
+
+        # Return the node with higher selection confidence
+        if confidence1 > confidence2:
             return node1
         else:
             return node2
