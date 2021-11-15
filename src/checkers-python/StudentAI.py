@@ -120,7 +120,9 @@ class GameStateTree:
         while self.board.is_win(player_number) == 0:
             print(f"Simulating on board:")
             self.board.show_board()
-            print(f"Win state: {self.board.is_win(player_number)}")
+            print(f"Current player: {player_number}")
+            print(f"\tWin state for this player: {self.board.is_win(player_number)}")
+            print(f"\tWin state for opponent:    {self.board.is_win(opponent(player_number))}")
 
             moves = self.board.get_all_possible_moves(player_number)
 
