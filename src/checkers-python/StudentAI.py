@@ -39,9 +39,10 @@ def board_heuristic(board):
 
 
 class GameStateTree:
-    def __init__(self, board, player_number, exploration_constant):
+    def __init__(self, col, row, p, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
-        self.board = board
+        self.board = Board(col, row, p)
+        self.board.initialize_game()
         self.exploration_constant = exploration_constant
 
     def choose_best_move(self):
@@ -265,15 +266,10 @@ class StudentAI:
         self.col = col
         self.row = row
         self.p = p
-        self.board = Board(col, row, p)
-        self.board.initialize_game()
-        self.opponent = {1: 2, 2: 1}
-
-        # Start by assuming we are player 2
-        self.color = 2
 
         # Build a tree for ourselves to use
-        self.tree = GameStateTree(self.board, self.color, 2)
+        # At the start, assume we are player 2
+        self.tree = GameStateTree(self.col, self.row, self.p, 2, 2)
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -281,15 +277,12 @@ class StudentAI:
     def get_move(self, move):
         # If the opponent previously made a move, update our board to express it
         if len(move) != 0:
-            self.board.make_move(move, self.opponent[self.color])
             self.tree.update_root(move)
         # If our opponent did not previously make a move, that means we are player 1!
         else:
-            self.color = 1
-
-            # Rebuild the tree with the correct number
+            # Rebuild the tree now that we know we are player 1
             # This should only happen once, so we can keep the state without losing any data
-            self.tree = GameStateTree(self.board, self.color, 2)
+            self.tree = GameStateTree(self.col, self.row, self.p, 1, 2)
 
         # Run simulations on the tree
         print("Running simulations...")
@@ -301,10 +294,9 @@ class StudentAI:
 
         # Modify the board using the selected move
         print(f"Monte Carlo decision made: {move}")
-        self.board.make_move(move, self.color)
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
-        print("Update root for the tree")
+        print("Updating root for the tree")
         self.tree.update_root(move)
 
         # Return the selected move back to the caller
