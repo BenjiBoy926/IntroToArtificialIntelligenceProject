@@ -26,14 +26,6 @@ def opponent(player_number):
     else:
         raise ValueError(f"Invalid player number '{player_number}'")
 
-# Get the board that results from the given move on the given player's turn
-# NOTE: maybe later for memory efficiency we should use the same board and make moves / undo moves
-# as we move down / up the tree. Just a thought
-def resulting_board(board, move, player_number):
-    new_board = copy.deepcopy(board)
-    new_board.make_move(move, player_number)
-    return new_board
-
 
 # Return a heuristic value for the board in this node.
 # Smaller values are good for player 1 (black)
@@ -294,7 +286,10 @@ class StudentAI:
         # If our opponent did not previously make a move, that means we are player 1!
         else:
             self.color = 1
-            self.tree.player_number = self.color
+
+            # Rebuild the tree with the correct number
+            # This should only happen once, so we can keep the state without losing any data
+            self.tree = GameStateTree(self.board, self.color, 2)
 
         # Run simulations on the tree
         print("Running simulations...")
