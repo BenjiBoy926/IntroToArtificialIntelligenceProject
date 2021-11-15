@@ -175,6 +175,8 @@ class GameStateTree:
             node.make_move(self.board)
         # If no child node is found that results from the given move, raise a value error
         else:
+            for child in self.root.children:
+                print(f"\tChild move: {child.inciting_move}")
             raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
 
 
