@@ -38,6 +38,14 @@ def board_heuristic(board):
     return board.white_count - board.black_count
 
 
+def node_incited_by_move(node, move):
+    print("Checking if node was incited by move")
+    print(f"\tNode's move:   {node.inciting_move}")
+    print(f"\tMove to check: {move}")
+
+    return node.inciting_move == move
+
+
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
@@ -165,7 +173,7 @@ class GameStateTree:
     # Change the root of the tree to the child with the same inciting move
     def update_root(self, move):
         # Get a node in the children of the root with the same move as the one passed in
-        match = filter(lambda n: n.inciting_move == move, self.root.children)
+        match = filter(lambda n: node_incited_by_move(n, move), self.root.children)
         # Get the next node in the iterator
         node = next(match, None)
 
