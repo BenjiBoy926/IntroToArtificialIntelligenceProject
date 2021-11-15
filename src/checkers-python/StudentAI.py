@@ -183,8 +183,9 @@ class GameStateTree:
 
         # If node is not none then update the root and the board
         if node is not None:
-            self.root = node
             node.make_move(self.board)
+            self.root = node
+            self.root.parent = None
         # If no child node is found that results from the given move, raise a value error
         else:
             for child in self.root.children:
