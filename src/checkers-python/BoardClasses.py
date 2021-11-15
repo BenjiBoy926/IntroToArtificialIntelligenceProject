@@ -294,25 +294,45 @@ class Board:
         @return :
         @raise :
         """
+
+        # Change parameter from string to number if necessary
         if turn == "W":
             turn = 2
         elif turn == "B":
             turn = 1
+
+        # Check for a tie
         if self.tie_counter >= self.tie_max:
             return -1
+
+        # BEFORE: this said - "if turn != 1", then B_has_move = False
+        # But that isn't right at all, is it?  It's basically saying "If player 1 has no moves
+        # and it is NOT player 1's turn right now, then they have no move"!  But it really SHOULD be saying:
+        # "If player 1 has no moves and it IS player 1's turn right now, then they have no move"!
+
+        """
         W_has_move = True
         B_has_move = True
+        
         if len(self.get_all_possible_moves(1)) == 0:
             if turn != 1:
                 B_has_move = False
         elif len(self.get_all_possible_moves(2)) == 0:
             if turn != 2:
                 W_has_move = False
-
+                
         if W_has_move and not B_has_move:
             return 2
         elif not W_has_move and B_has_move:
             return 1
+        """
+
+        # If the current player has no moves, return the number of the other player because they win
+        if len(self.get_all_possible_moves(turn)) == 0:
+            if turn == 1:
+                return 2
+            if turn == 2:
+                return 1
 
         W = True
         B = True
