@@ -42,14 +42,6 @@ def moves_equal(move1, move2):
     return str(move1) == str(move2)
 
 
-def node_incited_by_move(node, move):
-    print("Checking if node was incited by move")
-    print(f"\tNode's move:   {node.inciting_move}")
-    print(f"\tMove to check: {move}")
-
-    return moves_equal(node.inciting_move, move)
-
-
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
