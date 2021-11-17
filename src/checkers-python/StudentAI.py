@@ -58,7 +58,7 @@ class GameStateTree:
 
     def start_async_simulations(self):
         if self.async_simulation_thread is not None:
-            self.async_simulation_thread.join()
+            self.stop_async_simulations()
 
         # Set the simulation thread to start running
         self.async_simulation_thread_running = True
