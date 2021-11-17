@@ -5,6 +5,7 @@ import copy
 import math
 import random
 import collections
+import threading
 
 """
 How to run the code locally:
@@ -49,8 +50,31 @@ class GameStateTree:
         self.board.initialize_game()
         self.exploration_constant = exploration_constant
 
+        self.async_simulation_thread = None
+        self.async_simulation_thread_running = False
+
     def choose_best_move(self):
         return functools.reduce(self.better_win_ratio, self.root.children).inciting_move
+
+    def start_async_simulations(self):
+        if self.async_simulation_thread is not None:
+            self.async_simulation_thread.join()
+
+        # Set the simulation thread to start running
+        self.async_simulation_thread_running = True
+        self.async_simulation_thread = threading.Thread(target=self.async_simulations)
+
+    def stop_async_simulations(self):
+        # Set thread running to false and join it to this thread
+        if self.async_simulation_thread is not None:
+            self.async_simulation_thread_running = False
+            self.async_simulation_thread.join()
+            self.async_simulation_thread = None
+
+    # Runs simulations while the async thread is marked as "running"
+    def async_simulations(self):
+        while self.async_simulation_thread_running:
+            self.simulation_step()
 
     def run_simulations(self, iterations):
         for i in range(iterations):
@@ -285,6 +309,9 @@ class StudentAI:
     # The move passed in is the move that the opponent just made,
     # or an invalid move if we get to move first
     def get_move(self, move):
+        # Stop async simulations
+        self.tree.stop_async_simulations()
+
         # If the opponent previously made a move, update our board to express it
         if len(move) != 0:
             self.tree.update_root(move)
@@ -303,6 +330,10 @@ class StudentAI:
         # Update the root of the tree so it is in the correct position the next time it is our turn
         print("Updating root for the tree")
         self.tree.update_root(move)
+
+        # Now that we have made our move, start async simulations that can run while the other player
+        # decides what they will do
+        self.tree.start_async_simulations()
 
         # Return the selected move back to the caller
         return move
