@@ -173,7 +173,7 @@ class GameStateTree:
     # Change the root of the tree to the child with the same inciting move
     def update_root(self, move):
         # Expand the root
-        self.root.expand()
+        self.root.expand(self.board)
         # Get a node in the children of the root with the same move as the one passed in
         match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
         # Get the next node in the iterator
