@@ -274,13 +274,9 @@ class GameStateNode:
 # Students can modify anything except the class name and existing functions and variables.
 class StudentAI:
     def __init__(self, col, row, p):
-        self.col = col
-        self.row = row
-        self.p = p
-
         # Build a tree for ourselves to use
-        # At the start, assume we are player 2
-        self.tree = GameStateTree(self.col, self.row, self.p, 2, 2)
+        # The tree always starts as player 1
+        self.tree = GameStateTree(col, row, p, 1, 2)
 
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
@@ -289,11 +285,6 @@ class StudentAI:
         # If the opponent previously made a move, update our board to express it
         if len(move) != 0:
             self.tree.update_root(move)
-        # If our opponent did not previously make a move, that means we are player 1!
-        else:
-            # Rebuild the tree now that we know we are player 1
-            # This should only happen once, so we can keep the state without losing any data
-            self.tree = GameStateTree(self.col, self.row, self.p, 1, 2)
 
         # Run simulations on the tree
         print("Running simulations...")
