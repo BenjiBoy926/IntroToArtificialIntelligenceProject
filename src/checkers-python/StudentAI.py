@@ -172,6 +172,8 @@ class GameStateTree:
 
     # Change the root of the tree to the child with the same inciting move
     def update_root(self, move):
+        # Expand the root
+        self.root.expand()
         # Get a node in the children of the root with the same move as the one passed in
         match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
         # Get the next node in the iterator
@@ -209,12 +211,13 @@ class GameStateNode:
     def expand(self, board):
         # Get a list of all possible moves on this board
         moves = board.get_all_possible_moves(self.player_number)
-        self.children = []
 
         # Add a child for each move in the list
         for checker_moves in moves:
             for move in checker_moves:
-                self.children.append(GameStateNode(opponent(self.player_number), move, self))
+                # If no child exists with this move yet, then add it
+                if all([child.inciting_move != move for child in self.children]):
+                    self.children.append(GameStateNode(opponent(self.player_number), move, self))
 
     # Return the depth of this node, 0 if it has no parent
     def depth(self):
