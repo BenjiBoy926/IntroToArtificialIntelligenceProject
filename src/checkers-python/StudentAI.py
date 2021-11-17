@@ -68,6 +68,12 @@ class GameStateTree:
         # Set thread running to false and join it to this thread
         if self.async_simulation_thread is not None:
             self.async_simulation_thread_running = False
+
+            # If the thread is not alive yet, then start it
+            if not self.async_simulation_thread.is_alive():
+                self.async_simulation_thread.start()
+
+            # Immediately join the thread and set it to none
             self.async_simulation_thread.join()
             self.async_simulation_thread = None
 
