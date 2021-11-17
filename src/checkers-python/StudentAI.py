@@ -54,17 +54,21 @@ class GameStateTree:
 
     def run_simulations(self, iterations):
         for i in range(iterations):
-            # Select a leaf to simulate moves from
-            current = self.select()
+            self.simulation_step()
 
-            # Expand this node and get the result
-            current = self.expand(current)
+    # Run a single step in the monte carlo simulation
+    def simulation_step(self):
+        # Select a leaf to simulate moves from
+        current = self.select()
 
-            # Simulate a game and determine if we win
-            result = self.simulate(current.player_number)
+        # Expand this node and get the result
+        current = self.expand(current)
 
-            # Back propagate the results of the game
-            self.propagate(current, result)
+        # Simulate a game and determine if we win
+        result = self.simulate(current.player_number)
+
+        # Back propagate the results of the game
+        self.propagate(current, result)
 
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
