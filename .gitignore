@@ -2,7 +2,9 @@
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
+*.py[od]
+# pyc must be included for ai testing
+#*.py[cod]
 *$py.class
 
 # C extensions
