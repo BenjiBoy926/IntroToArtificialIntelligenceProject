@@ -16,6 +16,13 @@ Manual play:
 python3 main.py 7 7 2 m start_player 0
 """
 
+# TODO: get a better board heuristic. Should be accurate and discriminative.
+#  Slide 13 of the MCTS ideas slides gives some vague hint: "Implement simple MiniMax (a few moves
+#  lookahead) and run your H against Random/Poor/Average. What is your win rate?"
+#  (What does this even MEAN?!)
+# TODO: modified UCT with RAVE, combining the AMAF heuristic and the standard Monte Carlo UCT
+#  slides 16 - 20 in the MCTS ideas slides
+
 # Static functions
 
 # Given the current player's number, get the number of their opponent
@@ -53,9 +60,19 @@ class GameStateTree:
         self.async_simulation_thread = None
         self.async_simulation_thread_running = False
 
+    # Return true if we have many moves that we can make from the current root
+    def has_multiple_moves(self):
+        # Just in case the root has no children, expand it
+        self.root.expand(self.board)
+        return len(self.root.children) > 1
+
+    # Choose the node with the best win ratio and return the move used to get to that node
     def choose_best_move(self):
+        # Just in case the root has no children, expand it
+        self.root.expand(self.board)
         return functools.reduce(self.better_win_ratio, self.root.children).inciting_move
 
+    # Start an async thread of simulations on the tree
     def start_async_simulations(self):
         if self.async_simulation_thread is not None:
             self.stop_async_simulations()
@@ -64,6 +81,7 @@ class GameStateTree:
         self.async_simulation_thread_running = True
         self.async_simulation_thread = threading.Thread(target=self.async_simulations)
 
+    # Stop async thread of simulations
     def stop_async_simulations(self):
         # Set thread running to false and join it to this thread
         if self.async_simulation_thread is not None:
@@ -82,6 +100,7 @@ class GameStateTree:
         while self.async_simulation_thread_running:
             self.simulation_step()
 
+    # Run the number of simulations listed
     def run_simulations(self, iterations):
         for i in range(iterations):
             self.simulation_step()
@@ -311,6 +330,11 @@ class StudentAI:
         # The tree always starts as player 1
         self.tree = GameStateTree(col, row, p, 1, 2)
 
+        # Start simulations immediately
+        # This will be stopped really soon if our turn is first, but if their turn is first we may have time
+        # to run some simulations before our first turn begins
+        self.tree.start_async_simulations()
+
     # Get the next move that the AI wants to make
     # The move passed in is the move that the opponent just made,
     # or an invalid move if we get to move first
@@ -322,11 +346,12 @@ class StudentAI:
         if len(move) != 0:
             self.tree.update_root(move)
 
-        # Run simulations on the tree
-        print("Running simulations...")
-        self.tree.run_simulations(100)
+        # If the tree has multiple moves it could make, run more simulations to improve the tree state
+        if self.tree.has_multiple_moves():
+            print("Running simulations...")
+            self.tree.run_simulations(1000)
 
-        # Get the minimax choice of the search tree
+        # Get the best move of the search tree
         print(f"Simulations complete, getting best move...")
         move = self.tree.choose_best_move()
 
