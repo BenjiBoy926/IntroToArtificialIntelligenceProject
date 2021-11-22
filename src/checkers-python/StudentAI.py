@@ -1,4 +1,4 @@
-from BoardClasses import Move
+from 2BoardClasses import Move
 from BoardClasses import Board
 import functools
 import copy
@@ -49,6 +49,16 @@ def board_heuristic(board):
 def moves_equal(move1, move2):
     return str(move1) == str(move2)
 
+# Randomly select a move that can be made on the given board by the given player
+def random_move(board, player_number):
+    moves = board.get_all_possible_moves(player_number)
+
+    # Get a random checker and a random move for the checker
+    random_checker_index = random.randrange(0, len(moves))
+    random_move_index = random.randrange(0, len(moves[random_checker_index]))
+
+    # Return the randomly selected move
+    return moves[random_move_index][random_move]
 
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant, as_first_standard_blend_parameter):
@@ -76,6 +86,10 @@ class GameStateTree:
         self.root.expand(self.board)
         return functools.reduce(self.better_win_ratio, self.root.children).inciting_move
 
+    # Choose a random move on the current board
+    def choose_random_move(self):
+        return random_move(self.board, self.root.player_number)
+
     # Start an async thread of simulations on the tree
     def start_async_simulations(self):
         if self.async_simulation_thread is not None:
@@ -83,7 +97,7 @@ class GameStateTree:
 
         # Set the simulation thread to start running
         self.async_simulation_thread_running = True
-        self.async_simulation_thread = threading.Thread(target=self.async_simulations)
+        self.async_simulation_thread = threading.Thread(target=self.__async_simulations)
 
     # Stop async thread of simulations
     def stop_async_simulations(self):
@@ -98,11 +112,6 @@ class GameStateTree:
             # Immediately join the thread and set it to none
             self.async_simulation_thread.join()
             self.async_simulation_thread = None
-
-    # Runs simulations while the async thread is marked as "running"
-    def async_simulations(self):
-        while self.async_simulation_thread_running:
-            self.simulation_step()
 
     # Run the number of simulations listed
     def run_simulations(self, iterations):
@@ -212,14 +221,8 @@ class GameStateTree:
 
         # Make random moves on the board until a win state is found
         while self.board.is_win(player_number) == 0:
-            moves = self.board.get_all_possible_moves(player_number)
-
-            # Get a random checker and a random move for the checker
-            random_checker = random.randrange(0, len(moves))
-            random_move = random.randrange(0, len(moves[random_checker]))
-
-            # Make the random move on the current board
-            move = moves[random_checker][random_move]
+            # Make a random move on the current board
+            move = random_move(self.board, player_number)
             self.board.make_move(move, player_number)
 
             # Add this move to the move chain
@@ -258,6 +261,11 @@ class GameStateTree:
 
             # Update the current node to back-propagate
             current = current.parent
+
+    # Runs simulations while the async thread is marked as "running"
+    def __async_simulations(self):
+        while self.async_simulation_thread_running:
+            self.simulation_step()
 
 
 class GameStateNode:
@@ -358,11 +366,15 @@ class GameStateSimulationData:
 
     # Count up all the results in the data
     def result_count(self):
-        def add(num1, num2):
-            return num1 + num2
+        if len(self.results) > 0:
+            def add(num1, num2):
+                return num1 + num2
 
-        # Add up all the results to get the result count
-        return functools.reduce(add, self.results)
+            # Add up all the results to get the result count
+            return functools.reduce(add, self.results)
+        # If it has no results to reduce then return 0
+        else:
+            return 0
 
     # Get the ratio for a particular result
     def result_ratio(self, result):
