@@ -58,7 +58,7 @@ def random_move(board, player_number):
     random_move_index = random.randrange(0, len(moves[random_checker_index]))
 
     # Return the randomly selected move
-    return moves[random_move_index][random_move]
+    return moves[random_checker_index][random_move_index]
 
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant, as_first_standard_blend_parameter):
