@@ -170,7 +170,10 @@ class GameStateTree:
 
     # Given two nodes, return the node with the better win ratio, based on the player number of the root
     def better_win_ratio(self, node1, node2):
-        if node1.result_ratio(self.root.player_number) > node2.result_ratio(self.root.player_number):
+        ratio1 = node1.result_ratio(self.root.player_number, self.as_first_standard_blend_parameter)
+        ratio2 = node2.result_ratio(self.root.player_number, self.as_first_standard_blend_parameter)
+
+        if ratio1 > ratio2:
             return node1
         else:
             return node2
