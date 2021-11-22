@@ -434,7 +434,7 @@ class StudentAI:
         # If the tree has multiple moves it could make, run more simulations to improve the tree state
         if self.tree.has_multiple_moves():
             print("Running simulations...")
-            self.tree.run_simulations(500)
+            self.tree.run_simulations(1000)
 
         # Get the best move of the search tree
         print(f"Simulations complete, getting best move...")
