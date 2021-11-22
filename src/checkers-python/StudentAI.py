@@ -51,14 +51,18 @@ def moves_equal(move1, move2):
 
 
 class GameStateTree:
-    def __init__(self, col, row, p, player_number, exploration_constant):
+    def __init__(self, col, row, p, player_number, exploration_constant, as_first_standard_blend_parameter):
         self.root = GameStateNode(player_number)
         self.board = Board(col, row, p)
-        self.board.initialize_game()
         self.exploration_constant = exploration_constant
+        self.as_first_standard_blend_parameter = as_first_standard_blend_parameter
 
+        # Chain of moves that the tree used to get to the current propagate step of the simulations
+        self.move_chain = []
         self.async_simulation_thread = None
         self.async_simulation_thread_running = False
+
+        self.board.initialize_game()
 
     # Return true if we have many moves that we can make from the current root
     def has_multiple_moves(self):
@@ -107,35 +111,80 @@ class GameStateTree:
 
     # Run a single step in the monte carlo simulation
     def simulation_step(self):
+        # Clear out the move chain
+        self.move_chain.clear()
+
         # Select a leaf to simulate moves from
-        current = self.select()
+        current = self.__select()
 
         # Expand this node and get the result
-        current = self.expand(current)
+        current = self.__expand(current)
 
-        # Simulate a game and determine if we win
-        result = self.simulate(current.player_number)
+        # Simulate a game and determine the result we got from the simulation
+        result = self.__simulate(current.player_number)
 
         # Back propagate the results of the game
-        self.propagate(current, result)
+        self.__propagate(current, result)
+
+    # Change the root of the tree to the child with the same inciting move
+    def update_root(self, move):
+        # Expand the root. This should not overwrite existing children
+        self.root.expand(self.board)
+        # Get a node in the children of the root with the same move as the one passed in
+        match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
+        # Get the next node in the iterator
+        node = next(match, None)
+
+        # If node is not none then update the root and the board
+        if node is not None:
+            node.make_move(self.board)
+
+            # Update the root, and erase its parent
+            self.root = node
+            self.root.parent = None
+        # If no child node is found that results from the given move, raise a value error
+        else:
+            raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
+
+    # Given two nodes, choose the one with the better Monte Carlo selection confidence
+    def larger_selection_term(self, node1, node2):
+        term1 = node1.selection_term(self.root.player_number, self.exploration_constant,
+                                     self.as_first_standard_blend_parameter)
+        term2 = node2.selection_term(self.root.player_number, self.exploration_constant,
+                                     self.as_first_standard_blend_parameter)
+
+        # Return the node with higher selection confidence
+        if term1 > term2:
+            return node1
+        else:
+            return node2
+
+    # Given two nodes, return the node with the better win ratio, based on the player number of the root
+    def better_win_ratio(self, node1, node2):
+        if node1.result_ratio(self.root.player_number) > node2.result_ratio(self.root.player_number):
+            return node1
+        else:
+            return node2
 
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
-    def select(self):
+    def __select(self):
         current = self.root
 
         while not current.is_leaf() and self.board.is_win(self.root.player_number) == 0:
             # Reduce to the child with the best confidence
-            current = functools.reduce(self.better_confidence, current.children)
+            current = functools.reduce(self.larger_selection_term, current.children)
 
             # Make that move on the board, preparing to simulate
             current.make_move(self.board)
+            # Append the move to the move chain
+            self.move_chain.append(current.inciting_move)
 
         return current
 
     # The expansion step of the Monte Carlo
     # Expand the given node and choose a child to start the simulation from
-    def expand(self, selection):
+    def __expand(self, selection):
         # If this board is not a win for anyone, expand the given node and choose a node to simulate a game from
         if self.board.is_win(self.root.player_number) == 0:
             selection.expand(self.board)
@@ -158,7 +207,7 @@ class GameStateTree:
 
     # The simulation step of the Monte Carlo
     # Run a random game from the current board and return true if we won and false if not
-    def simulate(self, player_number):
+    def __simulate(self, player_number):
         total_moves = 0
 
         # Make random moves on the board until a win state is found
@@ -172,6 +221,9 @@ class GameStateTree:
             # Make the random move on the current board
             move = moves[random_checker][random_move]
             self.board.make_move(move, player_number)
+
+            # Add this move to the move chain
+            self.move_chain.append(move)
 
             # Increment total moves
             total_moves += 1
@@ -189,55 +241,23 @@ class GameStateTree:
         return result
 
     # Back propagate the result of a simulation from the given leaf node
-    def propagate(self, current, result):
+    def __propagate(self, current, result):
         while current is not None:
             # If this node's parent is not none, then undo the move that got us to this node
             # If it IS none, we know that this is the root node, so no move got us here
             if current.parent is not None:
                 self.board.undo()
 
-            current.update_simulations(result)
+            # Update the standard simulation data for the current node
+            current.standard_simulation_data.update(result)
+
+            # Update the as first simulation data for all siblings of this node
+            for sibling in current.siblings(False):
+                if any([moves_equal(sibling.inciting_move, move) for move in self.move_chain]):
+                    sibling.as_first_simulation_data.update(result)
 
             # Update the current node to back-propagate
             current = current.parent
-
-    # Given two nodes, choose the one with the better Monte Carlo selection confidence
-    def better_confidence(self, node1, node2):
-        confidence1 = node1.confidence(self.root.player_number, self.exploration_constant)
-        confidence2 = node2.confidence(self.root.player_number, self.exploration_constant)
-
-        # Return the node with higher selection confidence
-        if confidence1 > confidence2:
-            return node1
-        else:
-            return node2
-
-    # Given two nodes, return the node with the better win ratio, based on the player number of the root
-    def better_win_ratio(self, node1, node2):
-        if node1.result_ratio(self.root.player_number) > node2.result_ratio(self.root.player_number):
-            return node1
-        else:
-            return node2
-
-    # Change the root of the tree to the child with the same inciting move
-    def update_root(self, move):
-        # Expand the root. This should not overwrite existing children
-        self.root.expand(self.board)
-        # Get a node in the children of the root with the same move as the one passed in
-        match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
-        # Get the next node in the iterator
-        node = next(match, None)
-
-        # If node is not none then update the root and the board
-        if node is not None:
-            node.make_move(self.board)
-
-            # Update the root, and erase its parent
-            self.root = node
-            self.root.parent = None
-        # If no child node is found that results from the given move, raise a value error
-        else:
-            raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
 
 
 class GameStateNode:
@@ -249,12 +269,9 @@ class GameStateNode:
         self.player_number = player_number
         self.inciting_move = inciting_move
 
-        # Monte Carlo state
-        self.simulations = 0
-
-        # The simulation results is a dictionary that maps the board result
-        # to the number of times the node has gotten that result (default value of 0)
-        self.simulation_results = collections.defaultdict(lambda: 0)
+        # Initialize simulation data for "as first" and "standard"
+        self.as_first_simulation_data = GameStateSimulationData()
+        self.standard_simulation_data = GameStateSimulationData()
 
     # Expand this node by filling its list of children with all possible moves that can be made on the given board
     def expand(self, board):
@@ -267,6 +284,15 @@ class GameStateNode:
                 # If no child exists with this move yet, then add it
                 if all([child.inciting_move != move for child in self.children]):
                     self.children.append(GameStateNode(opponent(self.player_number), move, self))
+
+    # Get the siblings of this node
+    def siblings(self, include_self):
+        if self.parent is not None:
+            return [sibling for sibling in self.parent.childen if sibling is not self or include_self]
+        elif include_self:
+            return [self]
+        else:
+            return []
 
     # Return the depth of this node, 0 if it has no parent
     def depth(self):
@@ -292,33 +318,78 @@ class GameStateNode:
         else:
             raise RuntimeError("This node has no inciting move to make on the board")
 
-    # Update the number of times that this node has been simulated,
-    # and the number of times it lead to the given result
-    def update_simulations(self, board_result):
-        self.simulations += 1
-        self.simulation_results[board_result] += 1
-
     # True if this node is a leaf and has no children
     def is_leaf(self):
         return len(self.children) <= 0
 
-    # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
-    def confidence(self, player_number, exploration_constant):
-        if self.simulations > 0:
-            square_root_term = math.sqrt(math.log(self.parent.simulations) / self.simulations)
-            return self.result_ratio(player_number) + exploration_constant * square_root_term
-        # If this node is not simulated at all, we should definitely select it next!
-        else:
-            return math.inf
+    # Determine the blend between the "AMAF" simulations and standard simulations
+    def as_first_standard_blend(self, param):
+        return max(0, (param - self.standard_simulation_data.result_count()) / param)
 
-    # Ration of times this node has gotten the given result
+    # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
+    def selection_term(self, result, exploration_constant, param):
+        if self.parent is not None:
+            blend = self.as_first_standard_blend(param)
+
+            parent_as_first_simulations = self.parent.as_first_simulation_data.result_count()
+            as_first_term = self.as_first_simulation_data.selection_term(result, exploration_constant,
+                                                                         parent_as_first_simulations)
+
+            parent_standard_simulations = self.parent.standard_simulation_data.result_count()
+            standard_term = self.standard_simulation_data.selection_term(result, exploration_constant,
+                                                                         parent_standard_simulations)
+
+            return blend * as_first_term + (1 - blend) * standard_term
+        else:
+            raise RuntimeError("Cannot obtain the selection term of a node without a parent")
+
+    # Ratio of times this node has gotten the given result
     # over the number of times this node has been simulated
+    def result_ratio(self, result, param):
+        blend = self.as_first_standard_blend(param)
+        as_first_result_ratio = self.as_first_simulation_data.result_ratio(result)
+        standard_result_ratio = self.standard_simulation_data.result_ratio(result)
+        return blend * as_first_result_ratio + (1 - blend) * standard_result_ratio
+
+
+class GameStateSimulationData:
+    def __init__(self):
+        self.results = collections.defaultdict(lambda: 0)
+
+    # Count up all the results in the data
+    def result_count(self):
+        def add(num1, num2):
+            return num1 + num2
+
+        # Add up all the results to get the result count
+        return functools.reduce(add, self.results)
+
+    # Get the ratio for a particular result
     def result_ratio(self, result):
-        if self.simulations > 0:
-            return self.simulation_results[result] / self.simulations
+        count = self.result_count()
+
+        # Double check if there are no results so we do not divide by zero
+        if count > 0:
+            return self.results[result] / self.result_count()
         else:
             return 0
 
+    # Update the simulation data with a new result
+    def update(self, result):
+        self.results[result] += 1
+
+    # Compute the selection term for this simulation data
+    def selection_term(self, result, exploration_constant, parent_result_count):
+        result_count = self.result_count()
+
+        # If there are results then run the computation
+        if result_count > 0 and parent_result_count > 0:
+            square_root_term = math.sqrt(math.log(parent_result_count) / result_count)
+            return self.result_ratio(result) + exploration_constant * square_root_term
+        # If this node is not simulated at all, we should definitely select it next,
+        # so make it a big number
+        else:
+            return 10000
 
 # StudentAI class
 
@@ -328,7 +399,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 2)
+        self.tree = GameStateTree(col, row, p, 1, 2, 500)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
@@ -349,7 +420,7 @@ class StudentAI:
         # If the tree has multiple moves it could make, run more simulations to improve the tree state
         if self.tree.has_multiple_moves():
             print("Running simulations...")
-            self.tree.run_simulations(1000)
+            self.tree.run_simulations(500)
 
         # Get the best move of the search tree
         print(f"Simulations complete, getting best move...")
