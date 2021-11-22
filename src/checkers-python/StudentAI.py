@@ -1,4 +1,4 @@
-from 2BoardClasses import Move
+from BoardClasses import Move
 from BoardClasses import Board
 import functools
 import copy
