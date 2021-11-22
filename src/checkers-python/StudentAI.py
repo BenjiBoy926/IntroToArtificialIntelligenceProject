@@ -10,9 +10,10 @@ import threading
 """
 How to run the code locally:
 From <project_dir>/Tools
-python3 AI_Runner.py 7 7 2 l Sample_AIs/Random_AI/main.py ../src/checkers-python/main.py
+python3 AI_Runner.py 7 7 2 l Sample_AIs/Poor_AI_368/main.py ../src/checkers-python/main.py
 
 Manual play:
+From <project_dir>/src/checkers-python
 python3 main.py 7 7 2 m start_player 0
 """
 
@@ -20,8 +21,6 @@ python3 main.py 7 7 2 m start_player 0
 #  Slide 13 of the MCTS ideas slides gives some vague hint: "Implement simple MiniMax (a few moves
 #  lookahead) and run your H against Random/Poor/Average. What is your win rate?"
 #  (What does this even MEAN?!)
-# TODO: modified UCT with RAVE, combining the AMAF heuristic and the standard Monte Carlo UCT
-#  slides 16 - 20 in the MCTS ideas slides
 
 # Static functions
 
@@ -414,7 +413,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 2, 500)
+        self.tree = GameStateTree(col, row, p, 1, 2, 1000)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
