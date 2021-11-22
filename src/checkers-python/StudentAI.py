@@ -256,10 +256,13 @@ class GameStateTree:
             # Update the standard simulation data for the current node
             current.standard_simulation_data.update(result)
 
+            """
+            For now we just remove this because it seems to be bogging things down
             # Update the as first simulation data for all siblings of this node
             for sibling in current.siblings(False):
                 if any([moves_equal(sibling.inciting_move, move) for move in self.move_chain]):
                     sibling.as_first_simulation_data.update(result)
+            """
 
             # Update the current node to back-propagate
             current = current.parent
@@ -334,7 +337,10 @@ class GameStateNode:
 
     # Determine the blend between the "AMAF" simulations and standard simulations
     def as_first_standard_blend(self, param):
-        return max(0, (param - self.standard_simulation_data.result_count()) / param)
+        if param > 0:
+            return max(0, (param - self.standard_simulation_data.result_count()) / param)
+        else:
+            return 0
 
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
     def selection_term(self, result, exploration_constant, param):
@@ -413,7 +419,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 2, 1000)
+        self.tree = GameStateTree(col, row, p, 1, 2, 0)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
