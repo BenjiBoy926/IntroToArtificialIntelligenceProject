@@ -296,7 +296,7 @@ class GameStateNode:
     # Get the siblings of this node
     def siblings(self, include_self):
         if self.parent is not None:
-            return [sibling for sibling in self.parent.childen if sibling is not self or include_self]
+            return [sibling for sibling in self.parent.children if sibling is not self or include_self]
         elif include_self:
             return [self]
         else:
