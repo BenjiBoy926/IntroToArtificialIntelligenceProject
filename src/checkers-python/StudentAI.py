@@ -124,6 +124,8 @@ class GameStateTree:
     def simulation_step(self):
         # Clear out the move chain
         self.move_chain.clear()
+        # Clear out the sibling index
+        self.sibling_index.clear()
 
         # Select a leaf to simulate moves from
         current = self.__select()
