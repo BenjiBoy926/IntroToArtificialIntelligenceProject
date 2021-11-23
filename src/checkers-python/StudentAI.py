@@ -68,6 +68,9 @@ class GameStateTree:
 
         # Chain of moves that the tree used to get to the current propagate step of the simulations
         self.move_chain = []
+        # Index the siblings of the nodes in the move chain by their inciting move
+        # so that AMAF computations are faster
+        self.sibling_index = collections.defaultdict(lambda: [])
         self.async_simulation_thread = None
         self.async_simulation_thread_running = False
 
@@ -187,9 +190,7 @@ class GameStateTree:
             current = functools.reduce(self.larger_selection_term, current.children)
 
             # Make that move on the board, preparing to simulate
-            current.make_move(self.board)
-            # Append the move to the move chain
-            self.move_chain.append(current.inciting_move)
+            self.__go_to_node(current)
 
         return current
 
@@ -205,7 +206,7 @@ class GameStateTree:
                 selection = selection.children[0]
 
                 # Update the board to reflect the state at the returned node
-                selection.make_move(self.board)
+                self.__go_to_node(selection)
                 return selection
             # If no nodes were added in the expansion, return the same node
             # This would be kind of weird, because it means we didn't win but the board has no possible moves
@@ -256,22 +257,29 @@ class GameStateTree:
             # Update the standard simulation data for the current node
             current.standard_simulation_data.update(result)
 
-            """
-            For now we just remove this because it seems to be bogging things down
-            # Update the as first simulation data for all siblings of this node
-            for sibling in current.siblings(False):
-                if any([moves_equal(sibling.inciting_move, move) for move in self.move_chain]):
-                    sibling.as_first_simulation_data.update(result)
-            """
-
             # Update the current node to back-propagate
             current = current.parent
+
+        # Go through all moves in the move chain
+        for move in self.move_chain:
+            # Go through each sibling with this move in the index
+            for sibling in self.sibling_index[move]:
+                sibling.as_first_simulation_data.update(result)
 
     # Runs simulations while the async thread is marked as "running"
     def __async_simulations(self):
         while self.async_simulation_thread_running:
             self.simulation_step()
 
+    # Go to a node in the tree by making the node's move on the board
+    # updating the move chain and adding to the sibling index
+    def __go_to_node(self, node):
+        node.make_move(self.board)
+        # Append the inciting move to the move chain
+        self.move_chain.append(node.inciting_move)
+        # Append each sibling to the index, accessed by its move
+        for sibling in node.siblings(False):
+            self.sibling_index[sibling.inciting_move].append(sibling)
 
 class GameStateNode:
     def __init__(self, player_number, inciting_move=None, parent=None):
@@ -419,7 +427,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 2, 0)
+        self.tree = GameStateTree(col, row, p, 1, 2, 1000)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
