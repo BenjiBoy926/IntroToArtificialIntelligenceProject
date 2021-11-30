@@ -402,7 +402,7 @@ class GameStateNode:
                 return blend * as_first_term + (1 - blend) * standard_term
             # If the standard term is zero then return a large number to guarantee selection
             else:
-                return 10000
+                return 1000000
         else:
             raise RuntimeError("Cannot obtain the selection term of a node without a parent")
 
