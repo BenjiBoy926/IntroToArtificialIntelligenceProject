@@ -460,8 +460,10 @@ class GameStateSimulationData:
             return self.result_ratio(result) + exploration_constant * square_root_term
         # If this node is not simulated at all, we should definitely select it next,
         # so make it a big number
-        else:
+        elif result_count <= 0:
             return 10000
+        else:
+            return 0
 
     def string(self, result):
         return f"{self.results[result]}/{self.result_count()}"
