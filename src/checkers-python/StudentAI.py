@@ -417,8 +417,11 @@ class GameStateNode:
 
         string += f" - Standard: {self.standard_simulation_data.string(result)}, "
         string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
-        string += f"Blend: {self.as_first_standard_blend(param)}, "
-        string += f"Selection: {self.selection_term(result, exploration_constant, param)}"
+        string += f"Blend: {self.as_first_standard_blend(param)}"
+
+        # If this has a parent then add the selection term
+        if self.parent is not None:
+            string += f", Selection: {self.selection_term(result, exploration_constant, param)}"
 
         return string
 
