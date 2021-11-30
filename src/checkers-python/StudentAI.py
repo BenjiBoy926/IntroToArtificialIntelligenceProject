@@ -454,7 +454,11 @@ class GameStateSimulationData:
             return 10000
 
     def string(self, result):
-        return f"{str(self.results)}"
+        string = "{ "
+        for key, value in self.results.items():
+            string += f"{key}:{value} "
+        string += "}"
+        return string
 
 # StudentAI class
 
