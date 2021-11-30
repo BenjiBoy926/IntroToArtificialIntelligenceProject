@@ -466,7 +466,7 @@ class GameStateSimulationData:
         # If this node is not simulated at all, we should definitely select it next,
         # so make it a big number
         else:
-            return 10000
+            return 1000000
 
     def string(self, result):
         return f"{self.results[result]}/{self.result_count()}"
