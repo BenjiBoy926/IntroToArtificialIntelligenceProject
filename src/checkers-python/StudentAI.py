@@ -397,7 +397,12 @@ class GameStateNode:
             standard_term = self.standard_simulation_data.selection_term(result, exploration_constant,
                                                                          parent_standard_simulations)
 
-            return blend * as_first_term + (1 - blend) * standard_term
+            # If the standard term is non-zero then return the blend
+            if standard_term != 0:
+                return blend * as_first_term + (1 - blend) * standard_term
+            # If the standard term is zero then return a large number to guarantee selection
+            else:
+                return 10000
         else:
             raise RuntimeError("Cannot obtain the selection term of a node without a parent")
 
@@ -466,7 +471,7 @@ class GameStateSimulationData:
         # If this node is not simulated at all, we should definitely select it next,
         # so make it a big number
         else:
-            return 1000000
+            return 0
 
     def string(self, result):
         return f"{self.results[result]}/{self.result_count()}"
