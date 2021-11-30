@@ -195,7 +195,7 @@ class GameStateTree:
 
             # Add the string for this node to the total string
             string += "->"
-            string += current[0].string(self.root.player_number, self.as_first_standard_blend_parameter)
+            string += current.string(self.root.player_number, self.as_first_standard_blend_parameter)
             string += "\n"
 
             # Extend the stack with each child paired with its depth
