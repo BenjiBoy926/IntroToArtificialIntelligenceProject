@@ -182,6 +182,27 @@ class GameStateTree:
         else:
             return node2
 
+    def __str__(self):
+        stack = [self.root]
+        string = ""
+
+        while len(stack) > 0:
+            current = stack.pop()
+
+            # Output the vertical bars for nodes with a certain depth
+            for i in range(current.depth()):
+                string += "|"
+
+            # Add the string for this node to the total string
+            string += "->"
+            string += current[0].string(self.root.player_number, self.as_first_standard_blend_parameter)
+            string += "\n"
+
+            # Extend the stack with each child paired with its depth
+            stack.extend([child for child in current.children])
+
+        return string
+
     # The selection step of the Monte Carlo Tree search
     # Compute the upper confidence bound and use it to select the child to go to
     def __select(self):
@@ -377,6 +398,17 @@ class GameStateNode:
         standard_result_ratio = self.standard_simulation_data.result_ratio(result)
         return blend * as_first_result_ratio + (1 - blend) * standard_result_ratio
 
+    def string(self, result, param):
+        if self.inciting_move is not None:
+            string = f"Node {self.inciting_move}"
+        else:
+            string = "Node (root)"
+
+        string += f" - Standard: {self.standard_simulation_data.string(result)}, "
+        string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
+        string += f"Blend: {self.as_first_standard_blend(param)}"
+
+        return string
 
 class GameStateSimulationData:
     def __init__(self):
@@ -421,6 +453,9 @@ class GameStateSimulationData:
         else:
             return 10000
 
+    def string(self, result):
+        return f"{self.results[result]}/{self.result_count()}"
+
 # StudentAI class
 
 # The following part should be completed by students.
@@ -458,6 +493,8 @@ class StudentAI:
 
         # Modify the board using the selected move
         print(f"Monte Carlo decision made: {move}")
+        print(f"State of the tree:")
+        print(str(self.tree))
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
         print("Updating root for the tree")
