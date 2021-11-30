@@ -454,7 +454,7 @@ class GameStateSimulationData:
             return 10000
 
     def string(self, result):
-        return f"{self.results}"
+        return f"{str(self.results)}"
 
 # StudentAI class
 
