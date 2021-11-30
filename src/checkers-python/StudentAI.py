@@ -196,7 +196,8 @@ class GameStateTree:
 
             # Add the string for this node to the total string
             string += "->"
-            string += current.string(self.root.player_number, self.as_first_standard_blend_parameter)
+            string += current.string(self.root.player_number, self.exploration_constant,
+                                     self.as_first_standard_blend_parameter)
             string += "\n"
 
             if depth < max_depth:
@@ -408,7 +409,7 @@ class GameStateNode:
         standard_result_ratio = self.standard_simulation_data.result_ratio(result)
         return blend * as_first_result_ratio + (1 - blend) * standard_result_ratio
 
-    def string(self, result, param):
+    def string(self, result, exploration_constant, param):
         if self.inciting_move is not None:
             string = f"Node {self.inciting_move}"
         else:
@@ -416,7 +417,8 @@ class GameStateNode:
 
         string += f" - Standard: {self.standard_simulation_data.string(result)}, "
         string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
-        string += f"Blend: {self.as_first_standard_blend(param)}"
+        string += f"Blend: {self.as_first_standard_blend(param)}, "
+        string += f"Selection: {self.selection_term(result, exploration_constant, param)}"
 
         return string
 
@@ -460,10 +462,8 @@ class GameStateSimulationData:
             return self.result_ratio(result) + exploration_constant * square_root_term
         # If this node is not simulated at all, we should definitely select it next,
         # so make it a big number
-        elif result_count <= 0:
-            return 10000
         else:
-            return 0
+            return 10000
 
     def string(self, result):
         return f"{self.results[result]}/{self.result_count()}"
