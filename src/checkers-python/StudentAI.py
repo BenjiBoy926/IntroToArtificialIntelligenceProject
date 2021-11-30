@@ -421,7 +421,7 @@ class GameStateSimulationData:
                 return num1 + num2
 
             # Add up all the results to get the result count
-            return functools.reduce(add, self.results)
+            return functools.reduce(add, self.results.values())
         # If it has no results to reduce then return 0
         else:
             return 0
@@ -454,11 +454,7 @@ class GameStateSimulationData:
             return 10000
 
     def string(self, result):
-        string = "{ "
-        for key, value in self.results.items():
-            string += f"{key}:{value} "
-        string += "}"
-        return string
+        return f"{self.results[result]}/{self.result_count()}"
 
 # StudentAI class
 
