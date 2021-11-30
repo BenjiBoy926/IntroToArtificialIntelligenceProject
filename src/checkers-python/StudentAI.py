@@ -182,15 +182,16 @@ class GameStateTree:
         else:
             return node2
 
-    def __str__(self):
+    def string(self, max_depth):
         stack = [self.root]
         string = ""
 
         while len(stack) > 0:
             current = stack.pop()
+            depth = current.depth()
 
             # Output the vertical bars for nodes with a certain depth
-            for i in range(current.depth()):
+            for i in range(depth):
                 string += "|"
 
             # Add the string for this node to the total string
@@ -198,8 +199,17 @@ class GameStateTree:
             string += current.string(self.root.player_number, self.as_first_standard_blend_parameter)
             string += "\n"
 
-            # Extend the stack with each child paired with its depth
-            stack.extend([child for child in current.children])
+            if depth < max_depth:
+                # Extend the stack with each child paired with its depth
+                stack.extend([child for child in current.children])
+            else:
+                for i in range(depth + 1):
+                    string += "|"
+
+                # Output info that the results were truncated
+                string += "->"
+                string += "* results truncated"
+                string += "\n"
 
         return string
 
@@ -494,7 +504,7 @@ class StudentAI:
         # Modify the board using the selected move
         print(f"Monte Carlo decision made: {move}")
         print(f"State of the tree:")
-        print(str(self.tree))
+        print(self.tree.string(3))
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
         print("Updating root for the tree")
