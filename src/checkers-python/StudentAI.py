@@ -513,8 +513,8 @@ class StudentAI:
 
         # Modify the board using the selected move
         print(f"Monte Carlo decision made: {move}")
-        print(f"State of the tree:")
-        print(self.tree.string(3))
+        # print(f"State of the tree:")
+        # print(self.tree.string(3))
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
         print("Updating root for the tree")
