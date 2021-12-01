@@ -17,6 +17,7 @@ From <project_dir>/src/checkers-python
 python3 main.py 7 7 2 m start_player 0
 """
 
+
 # TODO: get a better board heuristic. Should be accurate and discriminative.
 #  Slide 13 of the MCTS ideas slides gives some vague hint: "Implement simple MiniMax (a few moves
 #  lookahead) and run your H against Random/Poor/Average. What is your win rate?"
@@ -33,6 +34,7 @@ def opponent(player_number):
     else:
         raise ValueError(f"Invalid player number '{player_number}'")
 
+
 # Return a heuristic value for the board in this node.
 # Smaller values are good for player 1 (black)
 # Larger values are good for player 2 (white)
@@ -43,10 +45,12 @@ def opponent(player_number):
 def board_heuristic(board):
     return board.white_count - board.black_count
 
+
 # We have to check if the strings are equal because checking if the objects are equal
 # results in bad behaviour where moves that SHOULD be equal are not equal
 def moves_equal(move1, move2):
     return str(move1) == str(move2)
+
 
 # Randomly select a move that can be made on the given board by the given player
 def random_move(board, player_number):
@@ -58,6 +62,7 @@ def random_move(board, player_number):
 
     # Return the randomly selected move
     return moves[random_checker_index][random_move_index]
+
 
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant, as_first_standard_blend_parameter):
@@ -220,8 +225,18 @@ class GameStateTree:
         current = self.root
 
         while not current.is_leaf() and self.board.is_win(self.root.player_number) == 0:
+            print("SELECT:")
+
+            if current is self.root:
+                for child in current.children:
+                    print("\t" + child.string(self.root.player_number, self.exploration_constant,
+                                              self.as_first_standard_blend_parameter))
+
             # Reduce to the child with the best confidence
             current = functools.reduce(self.larger_selection_term, current.children)
+
+            print("\t\tChild chosen: " + current.string(self.root.player_number, self.exploration_constant,
+                                                        self.as_first_standard_blend_parameter))
 
             # Make that move on the board, preparing to simulate
             self.__go_to_node(current)
@@ -314,6 +329,7 @@ class GameStateTree:
         # Append each sibling to the index, accessed by its move
         for sibling in node.siblings(False):
             self.sibling_index[sibling.inciting_move].append(sibling)
+
 
 class GameStateNode:
     def __init__(self, player_number, inciting_move=None, parent=None):
@@ -430,6 +446,7 @@ class GameStateNode:
 
         return string
 
+
 class GameStateSimulationData:
     def __init__(self):
         self.results = collections.defaultdict(lambda: 0)
@@ -474,6 +491,7 @@ class GameStateSimulationData:
     def string(self, result):
         return f"{self.results[result]}/{self.result_count()}"
 
+
 # StudentAI class
 
 # The following part should be completed by students.
@@ -503,7 +521,7 @@ class StudentAI:
         # If the tree has multiple moves it could make, run more simulations to improve the tree state
         if self.tree.has_multiple_moves():
             print("Running simulations...")
-            self.tree.run_simulations(1000)
+            self.tree.run_simulations(50)
 
         # Get the best move of the search tree
         print(f"Simulations complete, getting best move...")
