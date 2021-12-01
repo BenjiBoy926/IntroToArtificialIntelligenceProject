@@ -432,7 +432,7 @@ class GameStateNode:
             parent_simulations = self.parent.as_first_simulation_data.result_count()
         else:
             parent_simulations = 0
-        string += f"AMAF: {self.as_first_simulation_data.string(result, exploration_constant, parent_simulations)}, "
+        string += f"AMAF: ({self.as_first_simulation_data.string(result, exploration_constant, parent_simulations)}), "
 
         # If this has a parent then add the blend and selection term
         if self.parent is not None:
@@ -485,9 +485,8 @@ class GameStateSimulationData:
     def string(self, result, exploration_constant, parent_result_count):
         string = f"Ratio: {self.results[result]}/{self.result_count()}"
 
-        # If parent has simulations then output the selection data
-        if parent_result_count > 0:
-            string += f", Selection: {self.selection_term(result, exploration_constant, parent_result_count)}"
+        # Output selection term
+        string += f", Selection: {self.selection_term(result, exploration_constant, parent_result_count)}"
 
         return string
 
