@@ -389,13 +389,13 @@ class GameStateNode:
         if self.parent is not None:
             blend = self.as_first_standard_blend(param)
 
-            parent_as_first_simulations = self.parent.as_first_simulation_data.result_count()
+            parent_simulations = self.parent.as_first_simulation_data.result_count()
             as_first_term = self.as_first_simulation_data.selection_term(result, exploration_constant,
-                                                                         parent_as_first_simulations)
+                                                                         parent_simulations)
 
-            parent_standard_simulations = self.parent.standard_simulation_data.result_count()
+            parent_simulations = self.parent.standard_simulation_data.result_count()
             standard_term = self.standard_simulation_data.selection_term(result, exploration_constant,
-                                                                         parent_standard_simulations)
+                                                                         parent_simulations)
 
             # If the standard term is non-zero then return the blend
             if standard_term != 0:
@@ -465,11 +465,9 @@ class GameStateSimulationData:
         result_count = self.result_count()
 
         # If there are results then run the computation
-        if result_count > 0 and parent_result_count > 0:
+        if result_count > 0:
             square_root_term = math.sqrt(math.log(parent_result_count) / result_count)
             return self.result_ratio(result) + exploration_constant * square_root_term
-        # If this node is not simulated at all, we should definitely select it next,
-        # so make it a big number
         else:
             return 0
 
