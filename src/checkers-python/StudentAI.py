@@ -219,20 +219,8 @@ class GameStateTree:
 
         while not current.is_leaf() and self.board.is_win(self.root.player_number) == 0:
 
-            if current is self.root:
-                print("SELECT:")
-
-                for child in current.children:
-                    print("\t" + child.string(self.root.player_number, self.exploration_constant,
-                                              self.as_first_standard_blend_parameter))
-
             # Reduce to the child with the best confidence
             current = functools.reduce(self.larger_selection_term, current.children)
-
-            if current.parent is self.root:
-                print("CHOSEN:\t" + current.string(self.root.player_number, self.exploration_constant,
-                                                   self.as_first_standard_blend_parameter))
-                print("-----------------------------")
 
             # Make that move on the board, preparing to simulate
             self.__go_to_node(current)
@@ -517,7 +505,7 @@ class StudentAI:
         # If the tree has multiple moves it could make, run more simulations to improve the tree state
         if self.tree.has_multiple_moves():
             print("Running simulations...")
-            self.tree.run_simulations(50)
+            self.tree.run_simulations(1000)
 
         # Get the best move of the search tree
         print(f"Simulations complete, getting best move...")
