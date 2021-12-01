@@ -56,6 +56,15 @@ class Move:
             result += '-'
         return result[:-1].replace(" ", "")
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(str(self))
+
     def __len__(self):
         return len(self.seq)
 
