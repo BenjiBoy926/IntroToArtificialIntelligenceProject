@@ -423,7 +423,7 @@ class GameStateNode:
                                                                          parent_simulations)
 
             # If the standard term is non-zero then return the blend
-            if standard_term >= 0:
+            if standard_term > 0:
                 return blend * as_first_term + (1 - blend) * standard_term
             # If the standard term is zero then return a large number to guarantee selection
             else:
