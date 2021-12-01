@@ -62,6 +62,12 @@ class Move:
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __getitem__(self, i):
         return self.seq[i]
 
