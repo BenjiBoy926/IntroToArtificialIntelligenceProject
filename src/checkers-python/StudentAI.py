@@ -385,24 +385,19 @@ class GameStateNode:
             return 0
 
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
-    def selection_term(self, result, exploration_constant, param):
+    def selection_term(self, result, exploration_constant):
         if self.parent is not None:
-            blend = self.as_first_standard_blend(param)
+            result_count = self.standard_simulation_data.result_count()
+            parent_result_count = self.parent.standard_simulation_data.result_count()
 
-            parent_simulations = self.parent.as_first_simulation_data.result_count()
-            as_first_term = self.as_first_simulation_data.selection_term(result, exploration_constant,
-                                                                         parent_simulations)
-
-            parent_simulations = self.parent.standard_simulation_data.result_count()
-            standard_term = self.standard_simulation_data.selection_term(result, exploration_constant,
-                                                                         parent_simulations)
-
-            # If the standard term is non-zero then return the blend
-            if standard_term > 0:
-                return blend * as_first_term + (1 - blend) * standard_term
-            # If the standard term is zero then return a large number to guarantee selection
+            # If there are results then run the computation
+            if result_count > 0 and parent_result_count > 0:
+                square_root_term = math.sqrt(math.log(parent_result_count) / result_count)
+                standard_result_ratio = self.standard_simulation_data.result_ratio(result)
+                return standard_result_ratio + exploration_constant * square_root_term
+            # If there are no results then return a large selection to guarantee this is selected next
             else:
-                return 1000000
+                return 10000
         else:
             raise RuntimeError("Cannot obtain the selection term of a node without a parent")
 
@@ -416,28 +411,17 @@ class GameStateNode:
 
     def string(self, result, exploration_constant, param):
         if self.inciting_move is not None:
-            string = f"Node {self.inciting_move} - Standard: "
+            string = f"Node {self.inciting_move}"
         else:
-            string = "Node (root) - Standard: "
+            string = "Node (root)"
 
-        # Output the info for the standard simulations
-        if self.parent is not None:
-            parent_simulations = self.parent.standard_simulation_data.result_count()
-        else:
-            parent_simulations = 0
-        string += f"({self.standard_simulation_data.string(result, exploration_constant, parent_simulations)}), "
-
-        # Output the info for the amaf simluations
-        if self.parent is not None:
-            parent_simulations = self.parent.as_first_simulation_data.result_count()
-        else:
-            parent_simulations = 0
-        string += f"AMAF: ({self.as_first_simulation_data.string(result, exploration_constant, parent_simulations)}), "
+        string += f" - Standard: {self.standard_simulation_data.string(result)}, "
+        string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
 
         # If this has a parent then add the blend and selection term
         if self.parent is not None:
             string += f"Blend: {self.as_first_standard_blend(param)}"
-            string += f", Selection: {self.selection_term(result, exploration_constant, param)}"
+            string += f", Selection: {self.selection_term(result, exploration_constant)}"
 
         return string
 
@@ -471,24 +455,8 @@ class GameStateSimulationData:
     def update(self, result):
         self.results[result] += 1
 
-    # Compute the selection term for this simulation data
-    def selection_term(self, result, exploration_constant, parent_result_count):
-        result_count = self.result_count()
-
-        # If there are results then run the computation
-        if result_count > 0 and parent_result_count > 0:
-            square_root_term = math.sqrt(math.log(parent_result_count) / result_count)
-            return self.result_ratio(result) + exploration_constant * square_root_term
-        else:
-            return 0
-
-    def string(self, result, exploration_constant, parent_result_count):
-        string = f"Ratio: {self.results[result]}/{self.result_count()}"
-
-        # Output selection term
-        string += f", Selection: {self.selection_term(result, exploration_constant, parent_result_count)}"
-
-        return string
+    def string(self, result):
+        return f"{self.results[result]}/{self.result_count()}"
 
 
 # StudentAI class
