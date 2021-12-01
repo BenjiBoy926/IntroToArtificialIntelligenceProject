@@ -362,7 +362,7 @@ class GameStateNode:
         for checker_moves in moves:
             for move in checker_moves:
                 # If no child exists with this move yet, then add it
-                if all([child.inciting_move != move for child in self.children]):
+                if all([not moves_equal(move, child.inciting_move) for child in self.children]):
                     self.children.append(GameStateNode(opponent(self.player_number), move, self))
 
     # Get the siblings of this node
