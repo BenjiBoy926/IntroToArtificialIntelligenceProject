@@ -237,8 +237,9 @@ class GameStateTree:
             current = functools.reduce(self.larger_selection_term, current.children)
 
             if current.parent is self.root:
-                print("\t\tChild chosen: " + current.string(self.root.player_number, self.exploration_constant,
-                                                            self.as_first_standard_blend_parameter))
+                print("CHOSEN:\t" + current.string(self.root.player_number, self.exploration_constant,
+                                                   self.as_first_standard_blend_parameter))
+                print("-----------------------------")
 
             # Make that move on the board, preparing to simulate
             self.__go_to_node(current)
