@@ -416,20 +416,30 @@ class GameStateNode:
 
     def string(self, result, exploration_constant, param):
         if self.inciting_move is not None:
-            string = f"Node {self.inciting_move}"
+            string = f"Node {self.inciting_move} - Standard: "
         else:
-            string = "Node (root)"
+            string = "Node (root) - Standard: "
 
-        string += f" - Standard: {self.standard_simulation_data.string(result)}, "
-        string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
-        string += f"Blend: {self.as_first_standard_blend(param)}"
-
-        # If this has a parent then add the selection term
+        # Output the info for the standard simulations
         if self.parent is not None:
+            parent_simulations = self.parent.standard_simulation_data.result_count()
+        else:
+            parent_simulations = 0
+        string += f"({self.standard_simulation_data.string(result, exploration_constant, parent_simulations)}), "
+
+        # Output the info for the amaf simluations
+        if self.parent is not None:
+            parent_simulations = self.parent.as_first_simulation_data.result_count()
+        else:
+            parent_simulations = 0
+        string += f"AMAF: {self.as_first_simulation_data.string(result, exploration_constant, parent_simulations)}, "
+
+        # If this has a parent then add the blend and selection term
+        if self.parent is not None:
+            string += f"Blend: {self.as_first_standard_blend(param)}"
             string += f", Selection: {self.selection_term(result, exploration_constant, param)}"
 
         return string
-
 
 class GameStateSimulationData:
     def __init__(self):
@@ -472,8 +482,14 @@ class GameStateSimulationData:
         else:
             return 0
 
-    def string(self, result):
-        return f"{self.results[result]}/{self.result_count()}"
+    def string(self, result, exploration_constant, parent_result_count):
+        string = f"Ratio: {self.results[result]}/{self.result_count()}"
+
+        # If parent has simulations then output the selection data
+        if parent_result_count > 0:
+            string += f", Selection: {self.selection_term(result, exploration_constant, parent_result_count)}"
+
+        return string
 
 
 # StudentAI class
