@@ -478,7 +478,7 @@ class GameStateSimulationData:
         result_count = self.result_count()
 
         # If there are results then run the computation
-        if result_count > 0:
+        if result_count > 0 and parent_result_count > 0:
             square_root_term = math.sqrt(math.log(parent_result_count) / result_count)
             return self.result_ratio(result) + exploration_constant * square_root_term
         else:
