@@ -44,12 +44,6 @@ def opponent(player_number):
 def board_heuristic(board):
     return board.white_count - board.black_count
 
-# We have to check if the strings are equal because checking if the objects are equal
-# results in bad behaviour where moves that SHOULD be equal are not equal
-def moves_equal(move1, move2):
-    return str(move1) == str(move2)
-
-
 class GameStateTree:
     def __init__(self, col, row, p, player_number, exploration_constant):
         self.root = GameStateNode(player_number)
@@ -224,7 +218,7 @@ class GameStateTree:
         # Expand the root. This should not overwrite existing children
         self.root.expand(self.board)
         # Get a node in the children of the root with the same move as the one passed in
-        match = filter(lambda n: moves_equal(n.inciting_move, move), self.root.children)
+        match = filter(lambda n: n.inciting_move == move, self.root.children)
         # Get the next node in the iterator
         node = next(match, None)
 
