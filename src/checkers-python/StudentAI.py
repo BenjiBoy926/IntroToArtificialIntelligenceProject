@@ -503,7 +503,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 10, 1000)
+        self.tree = GameStateTree(col, row, p, 1, 0.1, 1000)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
