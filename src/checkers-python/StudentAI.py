@@ -159,10 +159,8 @@ class GameStateTree:
 
     # Given two nodes, choose the one with the better Monte Carlo selection confidence
     def larger_selection_term(self, node1, node2):
-        term1 = node1.selection_term(self.root.player_number, self.exploration_constant,
-                                     self.as_first_standard_blend_parameter)
-        term2 = node2.selection_term(self.root.player_number, self.exploration_constant,
-                                     self.as_first_standard_blend_parameter)
+        term1 = node1.selection_term(self.root.player_number, self.exploration_constant)
+        term2 = node2.selection_term(self.root.player_number, self.exploration_constant)
 
         # Return the node with higher selection confidence
         if term1 > term2:
@@ -387,6 +385,7 @@ class GameStateNode:
     # Return the confidence that Monte Carlo has that it should pick this node for the next simulation
     def selection_term(self, result, exploration_constant):
         if self.parent is not None:
+            # Count results for myself and parent
             result_count = self.standard_simulation_data.result_count()
             parent_result_count = self.parent.standard_simulation_data.result_count()
 
