@@ -239,6 +239,37 @@ class GameStateTree:
         else:
             raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
 
+    def string(self, max_depth):
+        stack = [self.root]
+        string = ""
+
+        while len(stack) > 0:
+            current = stack.pop()
+            depth = current.depth()
+
+            # Output the vertical bars for nodes with a certain depth
+            for i in range(depth):
+                string += "|"
+
+            # Add the string for this node to the total string
+            string += "->"
+            string += current.string(self.root.player_number, self.exploration_constant)
+            string += "\n"
+
+            if depth < max_depth:
+                # Extend the stack with each child paired with its depth
+                stack.extend([child for child in current.children])
+            else:
+                for i in range(depth + 1):
+                    string += "|"
+
+                # Output info that the results were truncated
+                string += "->"
+                string += "* results truncated"
+                string += "\n"
+
+        return string
+
 
 class GameStateNode:
     def __init__(self, player_number, inciting_move=None, parent=None):
@@ -319,6 +350,19 @@ class GameStateNode:
         else:
             return 0
 
+    def string(self, result, exploration_constant):
+        if self.inciting_move is not None:
+            string = f"Node {self.inciting_move}"
+        else:
+            string = "Node (root)"
+
+        string += f" - Win ratio: {self.simulation_results[result]}/{self.simulations}"
+
+        # If this has a parent then add the selection term
+        if self.parent is not None:
+            string += f", Selection: {self.confidence(result, exploration_constant)}"
+
+        return string
 
 # StudentAI class
 
@@ -357,6 +401,8 @@ class StudentAI:
 
         # Modify the board using the selected move
         print(f"Monte Carlo decision made: {move}")
+        print("Current state of the tree")
+        print(f"{self.tree.string(1)}")
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
         print("Updating root for the tree")
