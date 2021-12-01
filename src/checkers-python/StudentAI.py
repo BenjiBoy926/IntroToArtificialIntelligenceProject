@@ -217,6 +217,12 @@ class GameStateTree:
                 string += "* results truncated"
                 string += "\n"
 
+        string += "\n"
+        for child in self.root.children:
+            string += child.string(self.root.player_number, self.exploration_constant,
+                                   self.as_first_standard_blend_parameter)
+            string += "\n"
+
         return string
 
     # The selection step of the Monte Carlo Tree search
@@ -417,7 +423,7 @@ class GameStateNode:
                                                                          parent_simulations)
 
             # If the standard term is non-zero then return the blend
-            if standard_term != 0:
+            if standard_term >= 0:
                 return blend * as_first_term + (1 - blend) * standard_term
             # If the standard term is zero then return a large number to guarantee selection
             else:
@@ -503,7 +509,7 @@ class StudentAI:
     def __init__(self, col, row, p):
         # Build a tree for ourselves to use
         # The tree always starts as player 1
-        self.tree = GameStateTree(col, row, p, 1, 2, 1000)
+        self.tree = GameStateTree(col, row, p, 1, 10, 1000)
 
         # Start simulations immediately
         # This will be stopped really soon if our turn is first, but if their turn is first we may have time
