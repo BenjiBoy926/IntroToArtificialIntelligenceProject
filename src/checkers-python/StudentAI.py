@@ -217,12 +217,6 @@ class GameStateTree:
                 string += "* results truncated"
                 string += "\n"
 
-        string += "\n"
-        for child in self.root.children:
-            string += child.string(self.root.player_number, self.exploration_constant,
-                                   self.as_first_standard_blend_parameter)
-            string += "\n"
-
         return string
 
     # The selection step of the Monte Carlo Tree search
