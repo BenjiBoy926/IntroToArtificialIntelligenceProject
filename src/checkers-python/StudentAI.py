@@ -32,7 +32,7 @@ def opponent(player_number):
     elif player_number == 2:
         return 1
     else:
-        raise ValueError(f"Invalid player number '{player_number}'")
+        raise ValueError(str.format("Invalid player number '{0}'", player_number))
 
 
 # Return a heuristic value for the board in this node.
@@ -155,7 +155,8 @@ class GameStateTree:
             self.root.parent = None
         # If no child node is found that results from the given move, raise a value error
         else:
-            raise ValueError(f"Current search tree root has no child node that results from move '{move}'")
+            raise ValueError(str.format("Current search tree root has no child node that results from move '{0}'",
+                                        move))
 
     # Given two nodes, choose the one with the better Monte Carlo selection confidence
     def larger_selection_term(self, node1, node2):
@@ -410,17 +411,17 @@ class GameStateNode:
 
     def string(self, result, exploration_constant, param):
         if self.inciting_move is not None:
-            string = f"Node {self.inciting_move}"
+            string = str.format("Node {0}", self.inciting_move)
         else:
             string = "Node (root)"
 
-        string += f" - Standard: {self.standard_simulation_data.string(result)}, "
-        string += f"AMAF: {self.as_first_simulation_data.string(result)}, "
+        string += str.format(" - Standard: {0}, ", self.standard_simulation_data.string(result))
+        string += str.format("AMAF: {0}, ", self.as_first_simulation_data.string(result))
 
         # If this has a parent then add the blend and selection term
         if self.parent is not None:
-            string += f"Blend: {self.as_first_standard_blend(param)}"
-            string += f", Selection: {self.selection_term(result, exploration_constant)}"
+            string += str.format("Blend: {0}", self.as_first_standard_blend(param))
+            string += str.format(", Selection: {0}", self.selection_term(result, exploration_constant))
 
         return string
 
@@ -455,7 +456,7 @@ class GameStateSimulationData:
         self.results[result] += 1
 
     def string(self, result):
-        return f"{self.results[result]}/{self.result_count()}"
+        return str.format("{0}/{1}", self.results[result], self.result_count())
 
 
 # StudentAI class
@@ -490,12 +491,12 @@ class StudentAI:
             self.tree.run_simulations(1000)
 
         # Get the best move of the search tree
-        print(f"Simulations complete, getting best move...")
+        print("Simulations complete, getting best move...")
         move = self.tree.choose_best_move()
 
-        # Modify the board using the selected move
-        print(f"Monte Carlo decision made: {move}")
-        print(f"State of the tree:")
+        # Output the tree
+        print(str.format("Monte Carlo decision made: {0}", move))
+        print("State of the tree:")
         print(self.tree.string(1))
 
         # Update the root of the tree so it is in the correct position the next time it is our turn
