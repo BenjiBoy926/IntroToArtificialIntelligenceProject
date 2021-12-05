@@ -249,7 +249,7 @@ class GameStateTree:
             return selection
 
     # The simulation step of the Monte Carlo
-    # Run a random game from the current board and return true if we won and false if not
+    # Run a random game from the current board and return the result code
     def __simulate(self, player_number):
         total_moves = 0
 
